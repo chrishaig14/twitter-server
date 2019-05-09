@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Twitter</title>
+    <link rel="stylesheet" href="style_feed.css">
+</head>
+<template id="post-template">
+    <div class="post">
+        <div class="post-header">
+            <img class="post-user-pic">
+            <a href="#" class="post-user">John Doe</a>
+        </div>
+        <div class="post-content">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque maximus lorem id arcu pulvinar, eget sagittis est cursus. Nulla facilisi. Aliquam lacus lorem, mattis a dolor at, imperdiet ullamcorper orci. Pellentesque in lectus pharetra, laoreet ex sit amet, pretium velit. Mauris sed fringilla tellus. Sed ut lacinia leo, vel ornare est. Aenean at ornare neque, sit amet aliquam libero. Duis sagittis tempus eros vel pellentesque. Morbi sagittis eu nibh vitae maximus. Nam velit mi, consectetur fermentum tellus eget, semper dapibus lorem. Vivamus accumsan feugiat pulvinar. Quisque tristique non nulla in tristique. Maecenas sed tempor urna, nec accumsan ex. Donec facilisis mi eu velit pulvinar sodales. In pulvinar, augue nec porttitor vulputate, mi risus varius libero, vel auctor massa eros quis ipsum. Aliquam at commodo lacus, id placerat urna.</div>
+        <div class="post-footer">
+            <button>Retweet</button>
+            <button>Reply</button>
+            <button>Like</button>
+        </div>
+    </div>
+</template>
+<body>
+<h1>Feed</h1>
+<div id="main-container">
+
+    <div id="user-info">BASIC USER INFO
+        <img id="user-pic" src="https://i.pravatar.cc/150">
+    </div>
+    <div id="post-container">
+        <div id="new-post" class="post">
+            New post:
+            <input id="new-post-content" type="text" placeholder="Your post">
+            <button id="post-button">Post!</button>
+        </div>
+    </div>
+
+</div>
+</body>
+<script src="app.js"></script>
+</html>

@@ -1,0 +1,97 @@
+body {
+    background-color: lightblue;
+}
+
+*:focus {
+    outline: none;
+}
+
+form {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px;
+    border: solid 2px white;
+    padding: 10px;
+}
+
+input[type="text"], input[type="password"]{
+    border-radius: 10px;
+    border: solid 2px gray;
+    padding:5px;
+}
+
+button {
+    border: solid 2px darkgray;
+    background-color: lightskyblue;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+#create-user-title {
+    text-transform: uppercase;
+}
+
+#user-at-symbol {
+    font-weight: bold;
+}
+
+#main-container {
+    flex-direction: row;
+    display:flex;
+}
+
+#user-info {
+    border-radius: 10px;
+    color: white;
+    align-self: flex-start;
+    border: solid 2px red;
+    padding: 10px;
+}
+
+#post-container {
+    flex-direction: column;
+    display:flex;
+    border: solid 2px green;
+}
+
+.post {
+    margin-bottom: 10px;
+    border: solid 2px white;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: lightcyan;
+    display: flex;
+    flex-direction: column;
+}
+
+#user-pic {
+    margin-top: 10px;
+    border-radius: 50%;
+}
+
+.post-user-pic {
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.post-content {
+    padding: 10px;
+}
+.post-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+#post-button {
+    align-self: flex-start;
+}
+#new-post-content{
+    margin: 10px;
+}
+.post-user {
+    text-decoration: none;
+}
