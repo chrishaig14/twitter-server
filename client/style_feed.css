@@ -1,110 +1,96 @@
 body {
-    background-color: #74b3ff;
-}
+  background-color: #74b3ff; }
 
 *:focus {
-    outline: none;
-}
+  outline: none; }
 
 form {
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border-radius: 10px;
-    border: solid 2px white;
-    padding: 10px;
-}
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 10px;
+  border: solid 2px white;
+  padding: 10px; }
 
 input[type="text"], input[type="password"] {
-    border-radius: 10px;
-    border: solid 2px #74b3ff;
-    padding: 5px;
-}
+  border-radius: 10px;
+  border: solid 2px #74b3ff;
+  padding: 5px; }
 
 button {
-    border: none;
-    background-color: #74b3ff;
-    text-transform: uppercase;
-    color: white;
-    font-weight: bold;
-    border-radius: 10px;
-    padding: 5px;
-}
+  border: none;
+  background-color: #74b3ff;
+  text-transform: uppercase;
+  color: white;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 5px; }
 
 button:hover {
-    background-color: #a7cfff;
-}
+  background-color: #a7cfff; }
 
 button:active {
-    background-color: #daebff;
-}
+  background-color: #daebff; }
 
 #create-user-title {
-    text-transform: uppercase;
-}
+  text-transform: uppercase; }
 
 #user-at-symbol {
-    font-weight: bold;
-}
+  font-weight: bold; }
 
 #main-container {
-    flex-direction: row;
-    display: flex;
-}
+  flex-direction: row;
+  display: flex; }
 
 #user-info {
-    border-radius: 10px;
-    color: white;
-    align-self: flex-start;
-    padding: 10px;
-}
+  border-radius: 10px;
+  color: white;
+  align-self: flex-start;
+  padding: 10px; }
 
 #post-container {
-    flex-direction: column;
-    display: flex;
-}
+  flex-direction: column;
+  display: flex; }
 
 .post {
-    margin-bottom: 10px;
-    border-radius: 10px;
-    padding: 10px;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-}
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column; }
 
 #user-pic {
-    margin-top: 10px;
-    border-radius: 50%;
-}
+  margin-top: 10px;
+  border-radius: 50%; }
 
 .post-user-pic {
-    border-radius: 50%;
-    margin-right: 5px;
-    border: solid 2px #74b3ff;
-}
+  border-radius: 50%;
+  margin-right: 5px;
+  border: solid 2px #74b3ff; }
 
 .post-content {
-    padding: 10px;
-}
+  padding: 10px; }
 
 .post-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
+  display: flex;
+  flex-direction: row;
+  align-items: center; }
 
 #post-button {
-    align-self: flex-start;
-}
+  align-self: flex-start; }
 
 #new-post-content {
-    margin: 10px;
-}
+  margin-bottom: 10px;
+  align-self: stretch; }
 
 .post-user {
-    text-decoration: none;
-}
+  text-decoration: none; }
+
+#new-post-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; }
 
 /*# sourceMappingURL=style_feed.css.map */

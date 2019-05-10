@@ -21,6 +21,8 @@ post_form.addEventListener("submit", function (e) {
             let post_content = post_clone.children[0].getElementsByClassName("post-content")[0];
             post_content.innerHTML = new_post_content.value;
             document.getElementById("new-post").insertAdjacentElement("afterend", post_clone.children[0]);
+            new_post_content.value = "";
+
         }
     };
 
