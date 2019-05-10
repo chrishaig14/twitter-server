@@ -59,6 +59,18 @@ http.createServer(function (request, response){
             response.end();
         })
     }
+    if (request.url === "/post") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+        });
+        response.writeHead(200);
+        response.end();
+    }
 
 
 }).listen(8888);
