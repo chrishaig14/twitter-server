@@ -9,13 +9,20 @@ body {
     outline: none;
 }
 
-form {
+#login-container {
     background-color: white;
     display: flex;
     flex-direction: column;
     align-items: center;
     border-radius: 10px;
     border: solid 2px white;
+    padding: 10px;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 10px;
 }
 
@@ -58,4 +65,14 @@ button {
     flex-direction: column;
     display:flex;
     border: solid 2px green;
+}
+
+#username-box {
+    border: solid 2px gray;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+#username-input {
+    border: none;
 }

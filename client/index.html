@@ -7,20 +7,31 @@
 </head>
 <body>
 <h1></h1>
-
-<form id="login-form" action="#">
+<div id="login-container">
     <h1 id="login-title">Login</h1>
-    <div>
-        <label>Username: <span id="user-at-symbol">@</span><input id="username-input" type="text" placeholder="username"></label>
-    </div>
-    <br>
-    <div>
-        <label>Password: <input id="password-input" type="password" placeholder="password"></label>
-    </div>
-    <br>
-    <button id="login-button" type="submit">Login</button>
-</form>
+    <form id="login-form" action="#">
+        <div>
+            <label>Username:
+                <div id="username-box">
+                    <span id="user-at-symbol">@</span><input id="username-input" type="text" placeholder="username">
+                </div>
+            </label>
 
+        </div>
+        <br>
+        <div>
+            <label>Password:
+                <div>
+                    <input id="password-input" type="password" placeholder="password">
+                </div>
+            </label>
+        </div>
+        <span id="login-result" style="color:red; visibility:hidden">Placeholder</span>
+        <br>
+        <button id="login-button" type="submit">Login</button>
+    </form>
+    <button id="sign-up-button">Sign up</button>
+</div>
 </body>
-<script src="app.js"></script>
+<script src="index.js"></script>
 </html>
