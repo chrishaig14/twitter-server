@@ -145,8 +145,8 @@ function setup_feed() {
                 console.log(this.responseText);
             }
         };
-        request.open("POST", "search");
-        request.send(JSON.stringify({search_term: search_term}));
+        request.open("POST", "follow");
+        request.send(JSON.stringify({username: current_user, follow: search_term}));
     })
 }
 

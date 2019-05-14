@@ -160,12 +160,11 @@ http.createServer(function (request, response) {
             console.log("data received:", body);
 
             let data = JSON.parse(body);
-            con.query("SELECT * FROM users WHERE username = ?;", [data.follow_user], function (error, results, fields) {
+            con.query("INSERT INTO followers (username, following) VALUES (?, ?);", [data.username, data.follow], function (error, results, fields) {
                 if (error == null) {
                     console.log("NO ERROR");
                     if (results.length > 0) {
                         response.writeHead(200);
-                        response.write();
                         response.end();
                     }
                 } else {
