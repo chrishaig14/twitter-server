@@ -1,0 +1,203 @@
+$primary: #74b3ff;
+$secondary: #ffffff;
+
+body {
+  background-color: $primary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+*:focus {
+  outline: none;
+}
+
+#login-container {
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+#login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+input[type="text"], input[type="password"] {
+  border-radius: 10px;
+  padding: 5px;
+  border: solid 2px $primary;
+}
+
+button {
+  //border: solid 2px darkgray;
+  background-color: $primary;
+  border: none;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-radius: 10px;
+  padding: 5px;
+}
+
+#create-user-title {
+  text-transform: uppercase;
+}
+
+#user-at-symbol {
+  font-weight: bold;
+}
+
+#main-container {
+  flex-direction: row;
+  display: flex;
+}
+
+#user-info {
+  border-radius: 10px;
+  color: white;
+  align-self: flex-start;
+}
+
+#post-container {
+  flex-direction: column;
+  display: flex;
+}
+
+#username-box {
+  border: solid 2px $primary;
+  border-radius: 10px;
+  padding: 5px;
+}
+
+#username-input {
+  border: none;
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+*:focus {
+  outline: none;
+}
+
+form {
+  background-color: $secondary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 10px;
+  border: solid 2px white;
+  padding: 10px;
+}
+
+#search-label {
+  text-transform: uppercase;
+  font-weight: bold;
+  color: white;
+  background-color: $primary;
+  border-radius: 10px;
+  padding: 5px;
+
+}
+
+button:hover {
+  background-color: lighten($primary, 10%);
+}
+
+button:active {
+  background-color: lighten($primary, 20%);
+}
+
+#create-user-title {
+  text-transform: uppercase;
+}
+
+#user-at-symbol {
+  font-weight: bold;
+}
+
+#main-container {
+  flex-direction: row;
+  display: flex;
+}
+
+#user-info {
+  background-color: $secondary;
+  border-radius: 10px;
+  color: $primary;
+  align-self: flex-start;
+  padding: 10px;
+  margin-right: 10px;
+}
+
+#post-container {
+  flex-direction: column;
+  display: flex;
+}
+
+.post {
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: $secondary;
+  display: flex;
+  flex-direction: column;
+}
+
+#user-pic {
+  margin-top: 10px;
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  background-color: gray;
+}
+
+.post-user-pic {
+  border-radius: 50%;
+  margin-right: 5px;
+  border: solid 2px $primary;
+}
+
+.post-content {
+  padding: 10px;
+}
+
+.post-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+#post-button {
+  align-self: flex-start;
+}
+
+#new-post-content {
+  margin-bottom: 10px;
+  align-self: stretch;
+}
+
+.post-user {
+  text-decoration: none;
+}
+
+#new-post-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#header {
+  background-color: $secondary;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+}

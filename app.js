@@ -2,6 +2,9 @@ let http = require("http");
 let fs = require("fs");
 let mysql = require("mysql");
 let con = mysql.createConnection({host: "localhost", user: "root", password: "root"});
+
+let connected_users = [];
+
 con.connect(function (err) {
     if (err) throw err;
     console.log("Connected");
@@ -61,30 +64,34 @@ http.createServer(function (request, response) {
             response.write(data);
             response.end();
         })
-    } else if (request.url === "/feed.js") {
-        fs.readFile("client/feed.js", function (err, data) {
-            response.writeHead(200, {"Content-Type": "application/javascript"});
-            response.write(data);
-            response.end();
-        })
-    } else if (request.url === "/signup.js") {
-        fs.readFile("client/signup.js", function (err, data) {
-            response.writeHead(200, {"Content-Type": "application/javascript"});
-            response.write(data);
-            response.end();
-        })
-    } else if (request.url === "/style_feed.css") {
-        fs.readFile("client/style_feed.css", function (err, data) {
-            response.writeHead(200, {"Content-Type": "text/css"});
-            response.write(data);
-            response.end();
-        })
     } else if (request.url === "/feed") {
-        fs.readFile("client/feed.html", function (err, data) {
-            response.writeHead(200, {"Content-Type": "text/html"});
-            response.write(data);
-            response.end();
-        })
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+            let data = JSON.parse(body);
+            let username = data.username;
+            console.log("received:", data);
+            response.writeHead(200, {"Content-Type": "application/json"});
+            con.query("SELECT * FROM posts WHERE username IN (SELECT following FROM followers WHERE username = ?);", [username], function (error, results, fields) {
+                if (error === null) {
+                    console.log(JSON.stringify(results));
+                    // response.write(JSON.stringify(;
+                    response.writeHead(200);
+                    response.write(JSON.stringify({"posts": results}));
+                    response.end();
+                } else {
+                    console.log("ERROR: ", error);
+                    response.writeHead(204);
+                    response.end();
+                }
+            });
+        });
+
+
     } else if (request.url === "/signup") {
         if (request.method === "GET") {
             fs.readFile("client/signup.html", function (err, data) {
@@ -125,9 +132,81 @@ http.createServer(function (request, response) {
         request.on("end", () => {
             body = Buffer.concat(body).toString();
             console.log(body);
+            let data = JSON.parse(body);
+            console.log(data);
+            con.query("INSERT INTO posts (username, content) VALUES (?, ?)", [data.username, data.post.content], function (error, results, fields) {
+                if (error == null) {
+                    response.writeHead(200);
+                    console.log("NEW POST ADDED!");
+                    response.end();
+                } else {
+                    response.writeHead(204);
+                    console.log("ERROR:", error);
+                    response.end();
+                }
+            });
         });
-        response.writeHead(200);
-        response.end();
+    } else if (request.url === "/follow") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+            if (body === undefined) {
+                console.log("body is undefined!");
+            }
+            console.log("data received:", body);
+
+            let data = JSON.parse(body);
+            con.query("SELECT * FROM users WHERE username = ?;", [data.follow_user], function (error, results, fields) {
+                if (error == null) {
+                    console.log("NO ERROR");
+                    if (results.length > 0) {
+                        response.writeHead(200);
+                        response.write();
+                        response.end();
+                    }
+                } else {
+                    console.log("THERE WAS AN ERROR!");
+                    response.writeHead(400);
+                    response.write("ERROR!");
+                    response.end();
+                }
+            });
+        });
+    } else if (request.url === "/search") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+            if (body === undefined) {
+                console.log("body is undefined!");
+            }
+            console.log("data received:", body);
+
+            let data = JSON.parse(body);
+            con.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results, fields) {
+                if (error == null) {
+                    console.log("NO ERROR");
+                    if (results.length > 0) {
+                        console.log(results);
+                        response.writeHead(200);
+                        response.write(JSON.stringify(results[0]));
+                        response.end();
+                    }
+                } else {
+                    console.log("THERE WAS AN ERROR!");
+                    response.writeHead(400);
+                    response.write("ERROR!");
+                    response.end();
+                }
+            });
+        });
     } else {
         console.log("NOT FOUND!");
         response.writeHead(404);

@@ -32,4 +32,19 @@
         request.send(new_post_content.value);
 
     });
+
+    let search_form = document.getElementById("search-form");
+    search_form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        let search_term = document.getElementById("search-input").value;
+        console.log("searching for: ", search_term);
+        let request = new XMLHttpRequest();
+        request.onreadystatechange = function () {
+            if (this.readyState === 4) {
+                console.log(this.responseText);
+            }
+        };
+        request.open("POST", "search");
+        request.send(JSON.stringify({search_term: search_term}));
+    })
 })();
