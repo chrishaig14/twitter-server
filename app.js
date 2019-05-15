@@ -146,7 +146,7 @@ http.createServer(function (request, response) {
                 //         response.end();
                 //     }
                 // });
-                client.connect().then(() => client.query("INSERT INTO users VALUES(?, ?)", [data.username, data.password])).then((result) => {
+                client.query("INSERT INTO users VALUES(?, ?)", [data.username, data.password]).then((result) => {
                     console.log("RESULTS:", result);
                     client.end();
                 }).catch((e) => {
