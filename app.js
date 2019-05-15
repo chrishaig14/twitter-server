@@ -6,7 +6,10 @@ let con = mysql.createConnection({host: "localhost", user: "root", password: "ro
 let connected_users = [];
 
 con.connect(function (err) {
-    if (err) throw err;
+    if (err){ 
+        console.log("COULD NOT CONNECT TO DATABASE");
+        return;
+        throw err;}
     console.log("Connected");
 });
 con.query("USE twitter;", function (error, results, fields) {
