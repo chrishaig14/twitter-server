@@ -134,17 +134,24 @@ http.createServer(function (request, response) {
                 body = Buffer.concat(body).toString();
                 console.log(body);
                 let data = JSON.parse(body);
-                con.query("INSERT INTO users VALUES(?, ?, ?)", [data.username, data.password, data.info], function (error, results, fields) {
-                    console.log("ERROR:", error);
-                    console.log("RESULTS:", results);
-                    console.log("FIELDS:", fields);
-                    if (error === null) {
-                        response.writeHead(200);
-                        response.end();
-                    } else {
-                        response.writeHead(202);
-                        response.end();
-                    }
+                // con.query("INSERT INTO users VALUES(?, ?, ?)", [data.username, data.password, data.info], function (error, results, fields) {
+                //     console.log("ERROR:", error);
+                //     console.log("RESULTS:", results);
+                //     console.log("FIELDS:", fields);
+                //     if (error === null) {
+                //         response.writeHead(200);
+                //         response.end();
+                //     } else {
+                //         response.writeHead(202);
+                //         response.end();
+                //     }
+                // });
+                client.connect().then(() => client.query("INSERT INTO users VALUES(?, ?)", [data.username, data.password])).then((result) => {
+                    console.log("RESULTS:", result);
+                    client.end();
+                }).catch((e) => {
+                    console.log("ERROR:", e);
+                    client.end();
                 });
 
             });
