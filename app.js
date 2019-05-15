@@ -1,16 +1,20 @@
 let http = require("http");
 let fs = require("fs");
 let mysql = require("mysql");
+const {Client} = require("pg");
 let con = mysql.createConnection({host: "localhost", user: "root", password: "root"});
+
+const {DATABASE_URL} = process.env;
 
 let connected_users = [];
 
 var port = process.env.PORT || 8888;
 con.connect(function (err) {
-    if (err){ 
+    if (err) {
         console.log("COULD NOT CONNECT TO DATABASE");
         return;
-        throw err;}
+        throw err;
+    }
     console.log("Connected");
 });
 con.query("USE twitter;", function (error, results, fields) {
@@ -19,6 +23,15 @@ con.query("USE twitter;", function (error, results, fields) {
     console.log("FIELDS:", fields);
 });
 http.createServer(function (request, response) {
+
+    const client = new Client({connectionString: DATABASE_URL});
+    client.connect().then(() => client.query("SELECT * FROM hellotable")).then((result) => {
+        console.log(result);
+        client.end();
+    }).catch(() => {
+        console.log("ERROR:");
+        client.end();
+    });
     console.log("request url: ", request.url);
     if (request.url === "/") {
         fs.readFile("client/index.html", function (err, data) {

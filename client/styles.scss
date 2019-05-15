@@ -201,3 +201,17 @@ button:active {
   padding: 10px;
   border-radius: 10px;
 }
+
+.comment-section {
+  margin-top: 10px;
+}
+
+.comment {
+  margin-top: 5px;
+}
+
+.comment-section, .comment {
+  padding: 10px;
+  border: solid 2px $primary;
+  border-radius: 10px;
+}
