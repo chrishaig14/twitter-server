@@ -139,6 +139,12 @@ function setup_feed() {
         e.preventDefault();
         let search_term = document.getElementById("search-input").value;
         console.log("searching for: ", search_term);
+    });
+    let follow_form = document.getElementById("follow-form");
+    follow_form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        let search_term = document.getElementById("follow-input").value;
+        console.log("following: ", search_term);
         let request = new XMLHttpRequest();
         request.onreadystatechange = function () {
             if (this.readyState === 4) {
