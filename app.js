@@ -27,7 +27,14 @@ con.query("USE twitter;", function (error, results, fields) {
 http.createServer(function (request, response) {
 
     const client = new Client({connectionString: DATABASE_URL});
-    client.connect().then(() => client.query("SELECT * FROM hellotable")).then((result) => {
+    // client.connect().then(() => client.query("SELECT * FROM hellotable")).then((result) => {
+    //     console.log("RESULTS:", result);
+    //     client.end();
+    // }).catch((e) => {
+    //     console.log("ERROR:", e);
+    //     client.end();
+    // });
+    client.connect().then(() => client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")).then((result) => {
         console.log("RESULTS:", result);
         client.end();
     }).catch((e) => {
