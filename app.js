@@ -5,6 +5,7 @@ let con = mysql.createConnection({host: "localhost", user: "root", password: "ro
 
 let connected_users = [];
 
+var port = process.env.PORT || 8888;
 con.connect(function (err) {
     if (err){ 
         console.log("COULD NOT CONNECT TO DATABASE");
@@ -216,7 +217,7 @@ http.createServer(function (request, response) {
     }
 
 
-}).listen(8888);
+}).listen(port);
 
 let model = {
     users: [],
