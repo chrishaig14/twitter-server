@@ -36,7 +36,7 @@ http.createServer(function (request, response) {
     // });
     client.connect().then(() => client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")).then((result) => {
         console.log("RESULTS:", result);
-        client.end();
+        // client.end();
     }).catch((e) => {
         console.log("ERROR:", e);
         client.end();
@@ -148,10 +148,10 @@ http.createServer(function (request, response) {
                 // });
                 client.query("INSERT INTO users VALUES(?, ?)", [data.username, data.password]).then((result) => {
                     console.log("RESULTS:", result);
-                    client.end();
+                    // client.end();
                 }).catch((e) => {
                     console.log("ERROR:", e);
-                    client.end();
+                    // client.end();
                 });
 
             });
