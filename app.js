@@ -22,14 +22,16 @@ con.query("USE twitter;", function (error, results, fields) {
     console.log("RESULTS:", results);
     console.log("FIELDS:", fields);
 });
+
+
 http.createServer(function (request, response) {
 
     const client = new Client({connectionString: DATABASE_URL});
     client.connect().then(() => client.query("SELECT * FROM hellotable")).then((result) => {
-        console.log(result);
+        console.log("RESULTS:", result);
         client.end();
-    }).catch(() => {
-        console.log("ERROR:");
+    }).catch((e) => {
+        console.log("ERROR:", e);
         client.end();
     });
     console.log("request url: ", request.url);
