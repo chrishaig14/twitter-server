@@ -16,6 +16,7 @@ function show_feed() {
     feed_request.onreadystatechange = function () {
         if (feed_request.readyState === 4 && feed_request.status === 200) {
             console.log(feed_request.responseText);
+            console.log("FEED DATA RECEIVED:", feed_request.responseText);
             make_feed(JSON.parse(feed_request.responseText));
         }
     };
@@ -75,7 +76,7 @@ function setup_login() {
                     } else if (this.readyState === 4 && this.status === 202) {
                         result.style.visibility = "visible";
                         result.innerText = "ERROR: unknown error";
-                        console.log("ERROR: unknown error");
+                        console.log("ERROR: unknown error", request.responseText);
                     }
                 }
             };

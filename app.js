@@ -2,40 +2,28 @@ let http = require("http");
 let fs = require("fs");
 let mysql = require("mysql");
 const {Client} = require("pg");
-let con = mysql.createConnection({host: "localhost", user: "root", password: "root"});
 
-const {DATABASE_URL} = process.env;
+const DB_URL = process.env.DATABASE_URL;
+let DATABASE_URL;
+if (DB_URL) {
+    DATABASE_URL = {connectionString: DB_URL};
+} else {
+    DATABASE_URL = {host: "localhost", user: "twitterdb", password: "twitterdb", database: "twitterdb"};
+}
+
+// console.log(DATABASE_URL);
+
+console.log("Connecting database at:", DATABASE_URL);
 
 let connected_users = [];
 
 var port = process.env.PORT || 8888;
-con.connect(function (err) {
-    if (err) {
-        console.log("COULD NOT CONNECT TO DATABASE");
-        return;
-        throw err;
-    }
-    console.log("Connected");
-});
-con.query("USE twitter;", function (error, results, fields) {
-    console.log("ERROR:", error);
-    console.log("RESULTS:", results);
-    console.log("FIELDS:", fields);
-});
-
 
 http.createServer(function (request, response) {
 
-    const client = new Client({connectionString: DATABASE_URL});
-    // client.connect().then(() => client.query("SELECT * FROM hellotable")).then((result) => {
-    //     console.log("RESULTS:", result);
-    //     client.end();
-    // }).catch((e) => {
-    //     console.log("ERROR:", e);
-    //     client.end();
-    // });
+    const client = new Client(DATABASE_URL);
     client.connect().then(() => client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")).then((result) => {
-        console.log("RESULTS:", result);
+        // console.log("RESULTS:", result);
         // client.end();
     }).catch((e) => {
         console.log("ERROR:", e);
@@ -57,23 +45,24 @@ http.createServer(function (request, response) {
             body = Buffer.concat(body).toString();
             console.log(body);
             let data = JSON.parse(body);
-            con.query("SELECT * from users WHERE username = ? AND password = ?;", [data.username, data.password], function (error, results, fields) {
+            client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
                 console.log("ERROR:", error);
-                console.log("RESULTS:", results);
+                console.log("RESULTS:", results.rows);
                 // console.log("FIELDS:", fields);
                 if (error === null) {
-                    if (results.length === 1) {
+                    if (results.rows.length === 1) {
                         console.log("ONE RESULT FOUND!");
                         response.writeHead(200);
                         response.end();
                     } else {
                         console.log("NO RESULTS FOUND!");
                         response.writeHead(204);
-                        response.write("HERE!!!");
+                        response.write("NO RESULTS");
                         response.end();
                     }
                 } else {
                     response.writeHead(202);
+                    response.write("DATABASE ERROR:", error);
                     response.end();
                 }
             });
@@ -102,12 +91,13 @@ http.createServer(function (request, response) {
             let username = data.username;
             console.log("received:", data);
             response.writeHead(200, {"Content-Type": "application/json"});
-            con.query("SELECT * FROM posts WHERE username IN (SELECT following FROM followers WHERE username = ?);", [username], function (error, results, fields) {
+            client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
                 if (error === null) {
-                    console.log(JSON.stringify(results));
+                    // console.log(JSON.stringify(results));
                     // response.write(JSON.stringify(;
+                    console.log("results: ", results.rows);
                     response.writeHead(200);
-                    response.write(JSON.stringify({"posts": results}));
+                    response.write(JSON.stringify({"posts": results.rows}));
                     response.end();
                 } else {
                     console.log("ERROR: ", error);
@@ -134,21 +124,11 @@ http.createServer(function (request, response) {
                 body = Buffer.concat(body).toString();
                 console.log(body);
                 let data = JSON.parse(body);
-                // con.query("INSERT INTO users VALUES(?, ?, ?)", [data.username, data.password, data.info], function (error, results, fields) {
-                //     console.log("ERROR:", error);
-                //     console.log("RESULTS:", results);
-                //     console.log("FIELDS:", fields);
-                //     if (error === null) {
-                //         response.writeHead(200);
-                //         response.end();
-                //     } else {
-                //         response.writeHead(202);
-                //         response.end();
-                //     }
-                // });
                 client.query("INSERT INTO users VALUES($1, $2)", [data.username, data.password]).then((result) => {
-                    console.log("RESULTS:", result);
+                    console.log("RESULTS:", result.rows);
                     // client.end();
+                    response.writeHead(200);
+                    response.end();
                 }).catch((e) => {
                     console.log("ERROR:", e);
                     // client.end();
@@ -167,7 +147,7 @@ http.createServer(function (request, response) {
             console.log(body);
             let data = JSON.parse(body);
             console.log(data);
-            con.query("INSERT INTO posts (username, content) VALUES (?, ?)", [data.username, data.post.content], function (error, results, fields) {
+            con.query("INSERT INTO posts (username, content) VALUES (?, ?)", [data.username, data.post.content], function (error, results) {
                 if (error == null) {
                     response.writeHead(200);
                     console.log("NEW POST ADDED!");
@@ -193,7 +173,7 @@ http.createServer(function (request, response) {
             console.log("data received:", body);
 
             let data = JSON.parse(body);
-            con.query("INSERT INTO followers (username, following) VALUES (?, ?);", [data.username, data.follow], function (error, results, fields) {
+            con.query("INSERT INTO followers (username, following) VALUES (?, ?);", [data.username, data.follow], function (error, results) {
                 if (error == null) {
                     console.log("NO ERROR");
                     if (results.length > 0) {
@@ -222,11 +202,11 @@ http.createServer(function (request, response) {
             console.log("data received:", body);
 
             let data = JSON.parse(body);
-            con.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results, fields) {
+            con.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results) {
                 if (error == null) {
                     console.log("NO ERROR");
                     if (results.length > 0) {
-                        console.log(results);
+                        console.log(results.rows);
                         response.writeHead(200);
                         response.write(JSON.stringify(results[0]));
                         response.end();
