@@ -147,7 +147,7 @@ http.createServer(function (request, response) {
             console.log(body);
             let data = JSON.parse(body);
             console.log(data);
-            con.query("INSERT INTO posts (username, content) VALUES (?, ?)", [data.username, data.post.content], function (error, results) {
+            client.query("INSERT INTO posts (username, content) VALUES ($1, $2)", [data.username, data.post.content], function (error, results) {
                 if (error == null) {
                     response.writeHead(200);
                     console.log("NEW POST ADDED!");
@@ -159,6 +159,54 @@ http.createServer(function (request, response) {
                 }
             });
         });
+    } else if (request.url === "/postcomment") {
+        if (request.method === "POST") {
+            let body = [];
+            request.on("data", chunk => {
+                body.push(chunk);
+            });
+            request.on("end", () => {
+                body = Buffer.concat(body).toString();
+                console.log(body);
+                let data = JSON.parse(body);
+                console.log(data);
+                client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4)", [data.username, data.content, data.parent, data.post], function (error, results) {
+                    if (error == null) {
+                        response.writeHead(200);
+                        console.log("NEW COMMENT ADDED!");
+                        response.end();
+                    } else {
+                        response.writeHead(204);
+                        console.log("ERROR:", error);
+                        response.end();
+                    }
+                });
+            });
+        }
+    } else if (request.url === "/comments") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+            let data = JSON.parse(body);
+            console.log(data);
+            client.query("select * from comments where post = $1;", [data.post], function (error, results) {
+                if (error == null) {
+                    response.writeHead(200);
+                    response.write(JSON.stringify(results.rows));
+                    console.log("COMMENTS FOR POST;", data.post, ":", results.rows);
+                    response.end();
+                } else {
+                    response.writeHead(204);
+                    console.log("ERROR:", error);
+                    response.end();
+                }
+            });
+        });
+
     } else if (request.url === "/follow") {
         let body = [];
         request.on("data", chunk => {
@@ -173,7 +221,7 @@ http.createServer(function (request, response) {
             console.log("data received:", body);
 
             let data = JSON.parse(body);
-            con.query("INSERT INTO followers (username, following) VALUES (?, ?);", [data.username, data.follow], function (error, results) {
+            client.query("INSERT INTO followers (follower, followee) VALUES ($1, $2);", [data.username, data.follow], function (error, results) {
                 if (error == null) {
                     console.log("NO ERROR");
                     if (results.length > 0) {
@@ -202,7 +250,7 @@ http.createServer(function (request, response) {
             console.log("data received:", body);
 
             let data = JSON.parse(body);
-            con.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results) {
+            client.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results) {
                 if (error == null) {
                     console.log("NO ERROR");
                     if (results.length > 0) {
@@ -239,8 +287,3 @@ let model = {
         this.followers_table.push([user, followee]);
     }
 };
-let userinfo = {"username": "chrisha", "password": "123456", "info": "Hi, my name is Christian!"};
-model.create_user(userinfo);
-let userinfo2 = {"username": "johndoe", "password": "123456", "info": "Hi, my name is John!"};
-model.create_user(userinfo2);
-model.user_follow("chrisha", "johndoe");

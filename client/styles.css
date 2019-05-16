@@ -142,6 +142,13 @@ button:active {
   flex-direction: row;
   align-items: center; }
 
+.comment-user {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: gray;
+}
+
 #post-button {
   align-self: flex-start; }
 

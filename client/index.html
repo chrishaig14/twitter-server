@@ -17,14 +17,20 @@
         <div class="post-content"></div>
         <div class="post-footer">
             <button>Retweet</button>
-            <button id="reply-button">Reply</button>
+            <button class="reply-button">Reply</button>
             <button>Like</button>
         </div>
         <div class="comment-section">
-            <div class="comment">This is a comment</div>
-            <div class="comment">This is another comment</div>
-            <div class="comment">This is yet another comment</div>
-            <div class="comment">This is the last comment</div>
+            <form class="comment-form" action="#">
+                <input class="comment-input" type="text" placeholder="your comment">
+                <button type="submit" id="confirm-comment">Comment</button>
+            </form>
+            <div class="comment">
+                <div class="comment-user"></div>
+                <div class="comment-content">This is a comment</div>
+
+                <button>Reply</button>
+            </div>
         </div>
     </div>
 </template>

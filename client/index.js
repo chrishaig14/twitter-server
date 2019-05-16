@@ -25,11 +25,57 @@ function show_feed() {
 }
 
 function make_post(post_data) {
+    console.log("POST DATA RECEIVED: ,", post_data);
     let post_template = document.getElementById("post-template");
     let post_clone = post_template.content.cloneNode(true);
-    post_clone.children[0].getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
-    post_clone.children[0].getElementsByClassName("post-user")[0].innerHTML = post_data.username;
-    post_clone.children[0].getElementsByClassName("post-content")[0].innerHTML = post_data.content;
+    let post = post_clone.children[0];
+    post.getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
+    post.getElementsByClassName("post-user")[0].innerHTML = post_data.username;
+    post.getElementsByClassName("post-content")[0].innerHTML = post_data.content;
+    let comment_section = post.getElementsByClassName("comment-section")[0];
+    comment_section.style.display = "none";
+    let comment_form = post.getElementsByClassName("comment-form")[0];
+    console.log("ELEMENT: ", comment_form);
+    comment_form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        console.log("COMMENTING...");
+        let comment_input = comment_form.getElementsByClassName("comment-input")[0];
+        let content = comment_input.value;
+        let request = new XMLHttpRequest();
+        request.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200) {
+                console.log("COMMENT ADDED OK!");
+            } else {
+                console.log("COULD NOT POST COMMENT!");
+            }
+        };
+        request.open("POST", "comments");
+        request.send(JSON.stringify({username: current_user, content: content, parent: -1, post: post_data.id}));
+    });
+    let reply_button = post.getElementsByClassName("reply-button")[0];
+    reply_button.addEventListener("click", () => {
+        comment_section.style.display = "block";
+        // comment_section.
+        let request = new XMLHttpRequest();
+        request.onreadystatechange = function () {
+            console.log("STATE CHANGED TO", this.readyState);
+            if (this.readyState === 4 && this.status === 200) {
+                console.log("COMMENTS RECEVIED FOR POST ", post_data.id, request.responseText);
+                let comments = JSON.parse(request.responseText);
+                for (let comment of comments) {
+                    let comment_template = comment_section.getElementsByClassName("comment")[0];
+                    let new_comment = comment_template.cloneNode(true);
+                    let content = new_comment.getElementsByClassName("comment-content")[0];
+                    content.innerText = comment.content;
+                    let comment_user = new_comment.getElementsByClassName("comment-user")[0];
+                    comment_user.innerText = comment.username;
+                    comment_section.appendChild(new_comment);
+                }
+            }
+        };
+        request.open("POST", "comments");
+        request.send(JSON.stringify({post: post_data.id}));
+    });
     return post_clone;
 }
 
@@ -154,7 +200,9 @@ function setup_feed() {
         };
         request.open("POST", "follow");
         request.send(JSON.stringify({username: current_user, follow: search_term}));
-    })
+    });
+
+
 }
 
 (function () {
