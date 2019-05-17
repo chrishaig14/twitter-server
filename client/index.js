@@ -32,6 +32,8 @@ function make_post(post_data) {
     post.getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
     post.getElementsByClassName("post-user")[0].innerHTML = post_data.username;
     post.getElementsByClassName("post-content")[0].innerHTML = post_data.content;
+    let post_timestamp = post_clone.children[0].getElementsByClassName("post-timestamp")[0];
+    post_timestamp.innerText = (new Date(post_data.timestamp).toString());
     let comment_section = post.getElementsByClassName("comment-section")[0];
     comment_section.style.display = "none";
     let comment_form = post.getElementsByClassName("comment-form")[0];
@@ -178,6 +180,8 @@ function setup_feed() {
                 let post_clone = post_template.content.cloneNode(true);
                 let post_container = document.getElementById("post-container");
                 let post_content = post_clone.children[0].getElementsByClassName("post-content")[0];
+                let post_timestamp = post_clone.children[0].getElementsByClassName("post-timestamp")[0];
+                post_timestamp.innerText = (new Date()).toString();
                 post_content.innerHTML = new_post_content.value;
                 document.getElementById("new-post").insertAdjacentElement("afterend", post_clone.children[0]);
                 new_post_content.value = "";

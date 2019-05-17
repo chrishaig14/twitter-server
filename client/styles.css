@@ -57,6 +57,17 @@ button {
     flex-grow: 1;
 }
 
+.post-header-div {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-timestamp {
+    color: gray;
+    font-size: 8pt;
+    font-style: italic;
+}
+
 #username-box {
   border: solid 2px #74b3ff;
   border-radius: 10px;

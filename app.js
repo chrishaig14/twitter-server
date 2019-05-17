@@ -147,7 +147,8 @@ http.createServer(function (request, response) {
             console.log(body);
             let data = JSON.parse(body);
             console.log(data);
-            client.query("INSERT INTO posts (username, content) VALUES ($1, $2)", [data.username, data.post.content], function (error, results) {
+            let timestamp = new Date().toISOString();
+            client.query("INSERT INTO posts (username, content, timestamp) VALUES ($1, $2, $3)", [data.username, data.post.content, timestamp], function (error, results) {
                 if (error == null) {
                     response.writeHead(200);
                     console.log("NEW POST ADDED!");
