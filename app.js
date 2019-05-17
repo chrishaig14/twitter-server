@@ -267,6 +267,44 @@ http.createServer(function (request, response) {
                 }
             });
         });
+    } else if (request.url === "/searchsuggestion") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log(body);
+            if (body === undefined) {
+                console.log("body is undefined!");
+            }
+            console.log("data received:", body);
+
+            let data = JSON.parse(body);
+            console.log("data.text:", data.text);
+            client.query("SELECT * FROM users WHERE username LIKE $1;", ['%' + data.text + '%'], function (error, results) {
+                if (error == null) {
+                    console.log("NO ERROR");
+                    console.log("REUSLTS:", results);
+                    if (results.rows.length > 0) {
+                        console.log("RESULTS:", results.rows);
+                        response.writeHead(200);
+                        response.write(JSON.stringify(results.rows));
+                        response.end();
+                    } else {
+                        response.writeHead(200);
+                        response.write("{}");
+                        response.end();
+                    }
+                } else {
+                    console.log("ERRROR:", error);
+                    console.log("THERE WAS AN ERROR!");
+                    response.writeHead(400);
+                    response.write("ERROR!");
+                    response.end();
+                }
+            });
+        });
     } else {
         console.log("NOT FOUND!");
         response.writeHead(404);

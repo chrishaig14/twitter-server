@@ -164,6 +164,8 @@ function setup_signup() {
     });
 }
 
+let timeout = null;
+
 function setup_feed() {
     let new_post_form = document.getElementById("new-post-form");
     new_post_form.addEventListener("submit", function (e) {
@@ -196,7 +198,25 @@ function setup_feed() {
         console.log("searching for: ", search_term);
     });
     let search_input = document.getElementById("search-input");
-    // search_input.addEventListener()
+    search_input.addEventListener("input", function (e) {
+        e.preventDefault();
+        if (timeout) {
+            window.clearTimeout(timeout);
+            console.log("timeout cancelled");
+        }
+        timeout = window.setTimeout(() => {
+            let request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 200) {
+                    console.log("RECEIVED SUGGESTIONS: ", this.responseText);
+                }
+            };
+            request.open("POST", "searchsuggestion");
+            request.send(JSON.stringify({text: this.value}));
+        }, 1000);
+
+
+    });
     let follow_form = document.getElementById("follow-form");
     follow_form.addEventListener("submit", function (e) {
         e.preventDefault();
