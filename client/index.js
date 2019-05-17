@@ -45,11 +45,19 @@ function make_post(post_data) {
         request.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
                 console.log("COMMENT ADDED OK!");
+                console.log(new Date());
+                let comment_template = comment_section.getElementsByClassName("comment")[0];
+                let new_comment = comment_template.cloneNode(true);
+                let new_content = new_comment.getElementsByClassName("comment-content")[0];
+                new_content.innerText = content;
+                let comment_user = new_comment.getElementsByClassName("comment-user")[0];
+                comment_user.innerText = current_user;
+                comment_section.appendChild(new_comment);
             } else {
                 console.log("COULD NOT POST COMMENT!");
             }
         };
-        request.open("POST", "comments");
+        request.open("POST", "postcomment");
         request.send(JSON.stringify({username: current_user, content: content, parent: -1, post: post_data.id}));
     });
     let reply_button = post.getElementsByClassName("reply-button")[0];
@@ -187,6 +195,8 @@ function setup_feed() {
         let search_term = document.getElementById("search-input").value;
         console.log("searching for: ", search_term);
     });
+    let search_input = document.getElementById("search-input");
+    // search_input.addEventListener()
     let follow_form = document.getElementById("follow-form");
     follow_form.addEventListener("submit", function (e) {
         e.preventDefault();

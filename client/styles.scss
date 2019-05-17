@@ -177,11 +177,16 @@ button:active {
 }
 
 .comment-user {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: gray;
+  font-weight: bold;
+}
 
+.comment-content {
+  padding: 10px;
+  border-radius: 10px;
+  border: solid 2px $primary;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: lighten($primary, 20%);
 }
 
 #post-button {
@@ -211,14 +216,16 @@ button:active {
 }
 
 .comment-section {
+  background-color: lighten($primary, 20%);
   margin-top: 10px;
 }
 
-.comment {
+.comment, .comment-form {
   margin-top: 5px;
+  background-color: $secondary;
 }
 
-.comment-section, .comment {
+.comment-section, .comment, .comment-form {
   padding: 10px;
   border: solid 2px $primary;
   border-radius: 10px;
