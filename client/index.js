@@ -1,4 +1,5 @@
 var current_user = "";
+var token = "mytoken";
 
 function show_view(view) {
     let views = document.getElementsByClassName("view");
@@ -21,7 +22,9 @@ function show_feed() {
         }
     };
     feed_request.open("POST", "feed");
-    feed_request.send(JSON.stringify({username: current_user}));
+    console.log("current_user", current_user);
+    feed_request.send(JSON.stringify({username: str_obj(document.cookie).current_user}));
+    document.cookie = "state=feed;";
 }
 
 function make_post(post_data) {
@@ -105,6 +108,8 @@ function make_feed(feed_data) {
         let post_clone = make_post(post_data);
         post_container.appendChild(post_clone);
     }
+    let username_span = document.getElementById("username-span");
+    username_span.innerText = current_user;
 }
 
 function setup_login() {
@@ -119,6 +124,7 @@ function setup_login() {
                 if (this.readyState === 4 && this.status === 200) {
                     console.log("LOGIN OK");
                     current_user = document.getElementById("login-username-input").value;
+                    document.cookie = "current_user=" + current_user;
                     show_feed();
                 } else {
                     let result = document.getElementById("login-result");
@@ -235,12 +241,37 @@ function setup_feed() {
         request.open("POST", "follow");
         request.send(JSON.stringify({username: current_user, follow: search_term}));
     });
+    let logout_button = document.getElementById("logout-button");
+    logout_button.addEventListener("click", () => {
+        document.cookie = "state=home;";
+        document.cookie = "token=";
+        document.cookie = "current_user=";
+        show_view("view-login");
+    });
+}
 
-
+function str_obj(str) {
+    str = str.split('; ');
+    var result = {};
+    for (var i = 0; i < str.length; i++) {
+        var cur = str[i].split('=');
+        result[cur[0]] = cur[1];
+    }
+    return result;
 }
 
 (function () {
-    show_view("view-login");
+
+    let cookie = str_obj(document.cookie);
+
+    if (cookie.state === "feed") {
+        show_feed();
+    }
+    if (cookie.state === "home" || cookie.state === undefined) {
+        show_view("view-login");
+    }
+
+    current_user = cookie.current_user;
 
     setup_login();
 
