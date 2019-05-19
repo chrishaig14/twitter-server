@@ -19,6 +19,20 @@ function show_feed() {
             console.log(feed_request.responseText);
             console.log("FEED DATA RECEIVED:", feed_request.responseText);
             make_feed(JSON.parse(feed_request.responseText));
+
+            let pic_request = new XMLHttpRequest();
+
+            pic_request.onreadystatechange = function () {
+                if (pic_request.readyState === 4 && pic_request.status === 200) {
+                    let user_pic = document.getElementById("user-pic");
+
+                    console.log("received:::", JSON.parse(pic_request.responseText));
+                    user_pic.src = JSON.parse(pic_request.responseText)[0].img;
+                    console.log("received image ok!");
+                }
+            };
+            pic_request.open("POST", "userpicture");
+            pic_request.send(JSON.stringify({username: current_user}));
         }
     };
     feed_request.open("POST", "feed");
@@ -248,6 +262,30 @@ function setup_feed() {
         document.cookie = "current_user=";
         show_view("view-login");
     });
+    let file_input = document.getElementById("profile-pic-file");
+    file_input.addEventListener("change", function () {
+        let file = this.files[0];
+        encodeImageFileAsURL(file, function (result) {
+            let user_pic = document.getElementById("user-pic");
+            user_pic.src = result;
+            let request = new XMLHttpRequest();
+            request.onreadystatechange = function () {
+                if (request.readyState === 4 && request.status === 200) {
+                    console.log("UPDATED PROFILE PICTURE OK!");
+                }
+            };
+            request.open("PUT", "userpic");
+            request.send(JSON.stringify({username: current_user, img: result}));
+        });
+    });
+}
+
+function encodeImageFileAsURL(file, callback) {
+    var reader = new FileReader();
+    reader.onloadend = function () {
+        callback(reader.result);
+    };
+    reader.readAsDataURL(file);
 }
 
 function str_obj(str) {

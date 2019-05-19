@@ -268,6 +268,38 @@ http.createServer(function (request, response) {
                 }
             });
         });
+    } else if (request.url === "/userpic") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            let data = JSON.parse(body);
+            client.query("UPDATE imgs SET img = $2 WHERE username = $1;", [data.username, data.img], function (error, results) {
+                    response.writeHead(200);
+                    response.end();
+                    console.log(data.img);
+                    console.log("ERROR:", error);
+                }
+            );
+        });
+    } else if (request.url === "/userpicture") {
+        let body = [];
+        request.on("data", chunk => {
+            body.push(chunk);
+        });
+        request.on("end", () => {
+            body = Buffer.concat(body).toString();
+            console.log("received:", body);
+            let data = JSON.parse(body);
+            console.log("received:", data);
+            client.query("SELECT img FROM imgs WHERE username = $1;", [data.username], function (error, result) {
+                response.writeHead(200);
+                response.write(JSON.stringify(result.rows));
+                response.end();
+            });
+        });
     } else if (request.url === "/searchsuggestion") {
         let body = [];
         request.on("data", chunk => {
