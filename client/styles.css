@@ -3,6 +3,7 @@ body {
   display: flex;
   flex-direction: column;
     align-items: stretch;
+    font-family: "Titillium Web", serif;
 }
 
 *:focus {
@@ -31,10 +32,11 @@ button {
   background-color: #74b3ff;
   border: none;
   color: white;
-  font-weight: bold;
   text-transform: uppercase;
   border-radius: 10px;
-  padding: 5px; }
+    padding: 5px;
+    box-shadow: 0 2px 2px 0 #368cf5;
+}
 
 #create-user-title {
   text-transform: uppercase; }
@@ -104,7 +106,9 @@ button:hover {
   background-color: #a7cfff; }
 
 button:active {
-  background-color: #daebff; }
+    background-color: #a7cfff;
+    box-shadow: 0px 2px 2px 0px transparent;
+}
 
 #create-user-title {
   text-transform: uppercase; }
