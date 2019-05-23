@@ -63,7 +63,7 @@ const get_index = (request, response) => {
 
 app.get("/", get_index);
 
-const post_login = (request, response) => {
+function get_request_body(request, response, on_end) {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -71,32 +71,74 @@ const post_login = (request, response) => {
     request.on("end", () => {
         body = Buffer.concat(body).toString();
         console.log(body);
-        let data = JSON.parse(body);
-        client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
-            console.log("ERROR:", error);
-            console.log("RESULTS:", results.rows);
-            // console.log("FIELDS:", fields);
-            if (error === null) {
-                if (results.rows.length === 1) {
-                    console.log("ONE RESULT FOUND!");
-                    response.writeHead(200);
-                    response.end();
-                } else {
-                    console.log("NO RESULTS FOUND!");
-                    response.writeHead(204);
-                    response.write("NO RESULTS");
-                    response.end();
-                }
+        let request_body = JSON.parse(body);
+        on_end(request, response, request_body);
+    });
+}
+
+// const login = (request, response) => {
+//     let body = [];
+//     request.on("data", chunk => {
+//         body.push(chunk);
+//     });
+//     request.on("end", () => {
+//         body = Buffer.concat(body).toString();
+//         console.log(body);
+//         let data = JSON.parse(body);
+//         client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
+//             console.log("ERROR:", error);
+//             console.log("RESULTS:", results.rows);
+//             // console.log("FIELDS:", fields);
+//             if (error === null) {
+//                 if (results.rows.length === 1) {
+//                     console.log("ONE RESULT FOUND!");
+//                     response.writeHead(200);
+//                     response.end();
+//                 } else {
+//                     console.log("NO RESULTS FOUND!");
+//                     response.writeHead(204);
+//                     response.write("NO RESULTS");
+//                     response.end();
+//                 }
+//             } else {
+//                 response.writeHead(202);
+//                 response.write("DATABASE ERROR:", error);
+//                 response.end();
+//             }
+//         });
+//     });
+// };
+
+
+function login_handler(request, response, data) {
+    client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
+        console.log("ERROR:", error);
+        console.log("RESULTS:", results.rows);
+        // console.log("FIELDS:", fields);
+        if (error === null) {
+            if (results.rows.length === 1) {
+                console.log("ONE RESULT FOUND!");
+                response.writeHead(200);
+                response.end();
             } else {
-                response.writeHead(202);
-                response.write("DATABASE ERROR:", error);
+                console.log("NO RESULTS FOUND!");
+                response.writeHead(204);
+                response.write("NO RESULTS");
                 response.end();
             }
-        });
+        } else {
+            response.writeHead(202);
+            response.write("DATABASE ERROR:", error);
+            response.end();
+        }
     });
+}
+
+const login = (request, response) => {
+    get_request_body(request, response, login_handler);
 };
 
-app.post("/login", post_login);
+app.post("/login", login);
 
 
 const get_styles_css = (request, response) => {
@@ -116,41 +158,35 @@ const get_index_js = (request, response) => {
 };
 
 app.get("/styles.css", get_styles_css);
+4
 app.get("/index.js", get_index_js);
 
-const post_feed = (request, response) => {
-    let body = [];
-    request.on("data", chunk => {
-        body.push(chunk);
-    });
-    request.on("end", () => {
-        body = Buffer.concat(body).toString();
-        console.log(body);
-        let data = JSON.parse(body);
-        let username = data.username;
-        console.log("received:", data);
-        response.writeHead(200, {"Content-Type": "application/json"});
-        client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
-            if (error === null) {
-                // console.log(JSON.stringify(results));
-                // response.write(JSON.stringify(;
-                console.log("results: ", results.rows);
-                response.writeHead(200);
-                response.write(JSON.stringify({"posts": results.rows}));
-                response.end();
-            } else {
-                console.log("ERROR: ", error);
-                response.writeHead(204);
-                response.end();
-            }
-        });
+const get_feed = (request, response) => {
+
+    let username = request.headers["authorization"].split(" ")[1];
+    console.log("USERNAME:::", username);
+    // console.log("received:", data);
+    response.writeHead(200, {"Content-Type": "application/json"});
+    client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
+        if (error === null) {
+            // console.log(JSON.stringify(results));
+            // response.write(JSON.stringify(;
+            console.log("results: ", results.rows);
+            response.writeHead(200);
+            response.write(JSON.stringify({"posts": results.rows}));
+            response.end();
+        } else {
+            console.log("ERROR: ", error);
+            response.writeHead(204);
+            response.end();
+        }
     });
 };
 
-app.post("/feed", post_feed);
+app.get("/feed", get_feed);
 
 
-const post_signup = (request, response) => {
+const new_user = (request, response) => {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -173,10 +209,10 @@ const post_signup = (request, response) => {
 };
 
 
-app.post("/signup", post_signup);
+app.post("/users", new_user);
 
 
-const post_post = (request, response) => {
+const new_post = (request, response) => {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -201,10 +237,13 @@ const post_post = (request, response) => {
     });
 };
 
-app.post("/post", post_post);
+
+app.post("/users/{}/posts", new_post);
+
+// app.post("/post", new_post);
 
 
-function post_comment(request, response) {
+function new_comment(request, response) {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -228,7 +267,7 @@ function post_comment(request, response) {
     });
 }
 
-app.post("/postcomment", post_comment);
+app.post("/postcomment", new_comment);
 
 const get_comments = (request, response) => {
     let body = [];
@@ -258,7 +297,7 @@ const get_comments = (request, response) => {
 
 app.get("/comments", get_comments);
 
-const post_follow = (request, response) => {
+const follow_user = (request, response) => {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -289,7 +328,7 @@ const post_follow = (request, response) => {
     });
 };
 
-app.post("/follow", post_follow);
+app.put("/users/{}/followees/{}", follow_user);
 
 
 const post_search = (request, response) => {
@@ -415,16 +454,35 @@ app.default = function (request, response) {
     response.end();
 };
 
+function match_url(pattern, url) {
+    let s_pat = pattern.split("/");
+    let s_url = url.split("/");
+    if (s_pat.length != s_url.length) {
+        return false;
+    }
+    for (let i = 0; i < s_pat.length; i++) {
+        if (s_pat[i] === s_url[i] || s_pat[i] === "{}") {
+            continue;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 http.createServer(function (request, response) {
+    // console.log("request:", request);
     let handled = false;
     for (let req of app.requests) {
-        if (request.url === req.url && request.method === req.method) {
+        // if (match_url(req.url, request.url))
+        if (match_url(req.url, request.url) && request.method === req.method) {
             req.handler(request, response);
             handled = true;
             break;
         }
     }
     if (!handled) {
+        console.log("ERROR: no match for: ", request.url);
         app.default(request, response);
     }
 }).listen(port);

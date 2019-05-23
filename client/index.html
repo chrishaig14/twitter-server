@@ -104,14 +104,15 @@
         <button id="logout-button">Logout</button>
     </div>
     <div id="main-container">
-        <div id="user-info">BASIC USER INFO
+        <div id="user-info">
+            <span id="user-info-title">BASIC USER INFO</span>
             <img id="user-pic" src="https://i.pravatar.cc/150">
-            Logged in as <span id="username-span"></span>
-            <label>Change profile pic<input type="file" id="profile-pic-file"></label>
+            <span class="text">Logged in as <span id="username-span"></span></span>
+            <label id="profile-pic-label">Change profile pic<input type="file" id="profile-pic-file"></label>
         </div>
         <div id="post-container">
             <div id="new-post" class="post">
-                NEW POST
+                <span id="new-post-title">New post</span>
                 <form id="new-post-form">
                     <input id="new-post-content" type="text" placeholder="Your post">
                     <button id="confirm-new-post-button" type="submit">Post!</button>

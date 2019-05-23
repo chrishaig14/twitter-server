@@ -2,8 +2,8 @@ body {
   background-color: #74b3ff;
   display: flex;
   flex-direction: column;
-    align-items: stretch;
-    font-family: "Titillium Web", serif;
+  align-items: stretch;
+  font-family: "Titillium Web", serif;
 }
 
 *:focus {
@@ -28,14 +28,18 @@ input[type="text"], input[type="password"] {
   padding: 5px;
   border: solid 2px #74b3ff; }
 
-button {
+#profile-pic-file {
+  display: none;
+}
+
+#profile-pic-label, button {
   background-color: #74b3ff;
   border: none;
   color: white;
   text-transform: uppercase;
   border-radius: 10px;
-    padding: 5px;
-    box-shadow: 0 2px 2px 0 #368cf5;
+  padding: 5px;
+  box-shadow: 0 2px 2px 0 #368cf5;
 }
 
 #create-user-title {
@@ -50,24 +54,43 @@ button {
 
 #user-info {
   border-radius: 10px;
-  color: white;
-  align-self: flex-start; }
+  align-self: flex-start;
+  background-color: #ffffff;
+  color: #74b3ff;
+  padding: 10px;
+  margin-right: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#user-info-title {
+  color: black;
+  font-weight: bold;
+}
+
+.text {
+  color: black;
+}
+
+#username-span {
+  font-weight: bold;
+}
 
 #post-container {
   flex-direction: column;
-    display: flex;
-    flex-grow: 1;
+  display: flex;
+  flex-grow: 1;
 }
 
 .post-header-div {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .post-timestamp {
-    color: gray;
-    font-size: 8pt;
-    font-style: italic;
+  color: gray;
+  font-size: 8pt;
+  font-style: italic;
 }
 
 #username-box {
@@ -102,12 +125,12 @@ form {
   border-radius: 10px;
   padding: 5px; }
 
-button:hover {
+#profile-pic-label:hover, button:hover {
   background-color: #a7cfff; }
 
-button:active {
-    background-color: #a7cfff;
-    box-shadow: 0px 2px 2px 0px transparent;
+#profile-pic-label:active, button:active {
+  background-color: #a7cfff;
+  box-shadow: 0px 2px 2px 0px transparent;
 }
 
 #create-user-title {
@@ -119,14 +142,6 @@ button:active {
 #main-container {
   flex-direction: row;
   display: flex; }
-
-#user-info {
-  background-color: #ffffff;
-  border-radius: 10px;
-  color: #74b3ff;
-  align-self: flex-start;
-  padding: 10px;
-  margin-right: 10px; }
 
 #post-container {
   flex-direction: column;
@@ -161,16 +176,16 @@ button:active {
   align-items: center; }
 
 .comment-user {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .comment-content {
-    padding: 10px;
-    border-radius: 10px;
-    border: solid 2px #74b3ff;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    background-color: #daebff;
+  padding: 10px;
+  border-radius: 10px;
+  border: solid 2px #74b3ff;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: #daebff;
 }
 
 #post-button {
@@ -188,6 +203,14 @@ button:active {
   flex-direction: column;
   align-items: flex-start; }
 
+#new-post {
+  padding: 10px;
+}
+
+#new-post-title {
+  font-weight: bold;
+}
+
 #header {
   background-color: #ffffff;
   margin-bottom: 10px;
@@ -195,21 +218,21 @@ button:active {
   border-radius: 10px; }
 
 .comment-section {
-    background-color: #daebff;
-    margin-top: 10px;
+  background-color: #daebff;
+  margin-top: 10px;
 }
 
 .comment, .comment-form {
-    margin-top: 5px;
-    background-color: #ffffff;
+  margin-top: 5px;
+  background-color: #ffffff;
 }
 
 .comment-section, .comment, .comment-form {
-    padding: 10px;
-    border: solid 2px #74b3ff;
-    border-radius: 10px;
+  padding: 10px;
+  border: solid 2px #74b3ff;
+  border-radius: 10px;
 }
 
 .comment-input {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }

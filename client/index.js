@@ -35,9 +35,11 @@ function show_feed() {
             pic_request.send(JSON.stringify({username: current_user}));
         }
     };
-    feed_request.open("POST", "feed");
-    console.log("current_user", current_user);
-    feed_request.send(JSON.stringify({username: str_obj(document.cookie).current_user}));
+    feed_request.open("GET", "feed");
+    feed_request.setRequestHeader("Authorization", "Basic " + str_obj(document.cookie).current_user);
+    console.log("current_user:", current_user);
+    feed_request.send();
+    // feed_request.send(JSON.stringify({username: str_obj(document.cookie).current_user}));
     document.cookie = "state=feed;";
 }
 
@@ -178,7 +180,7 @@ function setup_signup() {
                 show_view("view-login");
             }
         };
-        request.open("POST", "signup");
+        request.open("POST", "users");
         let username = document.getElementById("signup-username-input").value;
         let password = document.getElementById("signup-password-input").value;
         let info = document.getElementById("signup-info-input").value;
@@ -210,7 +212,7 @@ function setup_feed() {
                 console.log("ERROR: could not post!");
             }
         };
-        request.open("POST", "post");
+        request.open("POST", "/users/" + current_user + "/posts");
         console.log(current_user);
         request.send(JSON.stringify({username: current_user, post: {content: new_post_content.value}}));
     });
@@ -252,7 +254,7 @@ function setup_feed() {
                 console.log(this.responseText);
             }
         };
-        request.open("POST", "follow");
+        request.open("PUT", "/users/" + current_user + "/followees/" + search_term);
         request.send(JSON.stringify({username: current_user, follow: search_term}));
     });
     let logout_button = document.getElementById("logout-button");

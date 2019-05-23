@@ -35,7 +35,11 @@ input[type="text"], input[type="password"] {
   border: solid 2px $primary;
 }
 
-button {
+#profile-pic-file {
+  display: none;
+}
+
+#profile-pic-label, button {
   //border: solid 2px darkgray;
   background-color: $primary;
   border: none;
@@ -62,8 +66,26 @@ button {
 
 #user-info {
   border-radius: 10px;
-  color: white;
   align-self: flex-start;
+  background-color: $secondary;
+  color: $primary;
+  padding: 10px;
+  margin-right: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#user-info-title {
+  color: black;
+  font-weight: bold;
+}
+
+.text {
+  color: black;
+}
+
+#username-span {
+  font-weight: bold;
 }
 
 #post-container {
@@ -122,12 +144,12 @@ form {
 
 }
 
-button:hover {
+#profile-pic-label:hover, button:hover {
   background-color: lighten($primary, 10%);
 
 }
 
-button:active {
+#profile-pic-label:active, button:active {
   background-color: lighten($primary, 10%);
   box-shadow: 0px 2px 2px 0px transparent;
 }
@@ -145,14 +167,6 @@ button:active {
   display: flex;
 }
 
-#user-info {
-  background-color: $secondary;
-  border-radius: 10px;
-  color: $primary;
-  align-self: flex-start;
-  padding: 10px;
-  margin-right: 10px;
-}
 
 #post-container {
   flex-direction: column;
@@ -222,6 +236,14 @@ button:active {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+#new-post {
+  padding: 10px;
+}
+
+#new-post-title {
+  font-weight: bold;
 }
 
 #header {
