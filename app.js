@@ -454,6 +454,20 @@ app.default = function (request, response) {
     response.end();
 };
 
+const get_user_image = (request, response) => {
+    console.log("GETTING USER IMAGE!!!!");
+    let user_id = request.url.split("/")[2];
+    client.query("SELECT img FROM imgs WHERE username = $1;", [user_id], (error, result) => {
+        console.log("user_id:", user_id);
+        console.log(result.rows[0].img.substr(0, 10));
+        response.writeHead(200, {"Content-Type": "xxx"});
+        response.write(result.rows[0].img);
+        response.end();
+    })
+};
+
+app.get("/users/{}/img", get_user_image);
+
 function match_url(pattern, url) {
     let s_pat = pattern.split("/");
     let s_url = url.split("/");

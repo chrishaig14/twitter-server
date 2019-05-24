@@ -165,7 +165,10 @@ form {
 .post-user-pic {
   border-radius: 50%;
   margin-right: 5px;
-  border: solid 2px #74b3ff; }
+  border: solid 2px #74b3ff;
+  width: 32px;
+  height: 32px;
+}
 
 .post-content {
   padding: 10px; }

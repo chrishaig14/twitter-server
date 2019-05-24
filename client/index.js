@@ -44,11 +44,21 @@ function show_feed() {
 }
 
 function make_post(post_data) {
+
     console.log("POST DATA RECEIVED: ,", post_data);
     let post_template = document.getElementById("post-template");
     let post_clone = post_template.content.cloneNode(true);
     let post = post_clone.children[0];
-    post.getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
+    let user_img_req = new XMLHttpRequest();
+    user_img_req.onreadystatechange = function () {
+        if (user_img_req.readyState === 4 && user_img_req.status === 200) {
+            post.getElementsByTagName("img")[0].src = user_img_req.responseText;
+        }
+    };
+    user_img_req.open("GET", "/users/" + post_data.username + "/img");
+
+    user_img_req.send();
+    // post.getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
     post.getElementsByClassName("post-user")[0].innerHTML = post_data.username;
     post.getElementsByClassName("post-content")[0].innerHTML = post_data.content;
     let post_timestamp = post_clone.children[0].getElementsByClassName("post-timestamp")[0];
@@ -63,6 +73,7 @@ function make_post(post_data) {
         let comment_input = comment_form.getElementsByClassName("comment-input")[0];
         let content = comment_input.value;
         let request = new XMLHttpRequest();
+
         request.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
                 console.log("COMMENT ADDED OK!");
@@ -110,16 +121,8 @@ function make_post(post_data) {
 
 function make_feed(feed_data) {
     show_view("view-feed");
-    // console.log("feed data received:", feed_data);
-    // let post_template = document.getElementById("post-template");
-    // let post_clone = post_template.content.cloneNode(true);
     let post_container = document.getElementById("post-container");
-    // post_clone.children[0].getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
-    // post_clone.children[0].getElementsByTagName("img")[0].id = x.toString();
-    // console.log(post_clone.children[0]);
-    // post_clone.children[0].getElementsByClassName("post-user")[0].innerHTML = feed_data.posts[0].username;
-    // post_clone.children[0].getElementsByClassName("post-content")[0].innerHTML = feed_data.posts[0].content;
-    // console.log(feed_data["posts"]);
+
     for (let post_data of feed_data.posts) {
         let post_clone = make_post(post_data);
         post_container.appendChild(post_clone);
@@ -135,6 +138,9 @@ function setup_login() {
         function (event) {
             event.preventDefault();
             let request = new XMLHttpRequest();
+            console.log("ORIGIN:", request.origin);
+            console.log("ORIGIN:", request.base);
+            console.log("ORIGIN:", request.channel);
             request.onreadystatechange = function () {
 
                 if (this.readyState === 4 && this.status === 200) {
