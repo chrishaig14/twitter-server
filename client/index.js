@@ -43,6 +43,65 @@ function show_feed() {
     document.cookie = "state=feed;";
 }
 
+let Request = function () {
+    let req_obj = {
+        xhr: new XMLHttpRequest(),
+        send: function (body) {
+            req_obj.xhr.onreadystatechange = function () {
+                if (req_obj.xhr.readyState === 4) {
+                    req_obj.handlers[req_obj.xhr.status](req_obj.xhr);
+                }
+            };
+            req_obj.xhr.send(body);
+        },
+        handlers: {},
+        add_response_handler: function (status, handler) {
+            req_obj.handlers[status] = handler;
+        }
+    };
+    return req_obj;
+};
+
+function show_user(username) {
+    let user_info_req = new XMLHttpRequest();
+    let user_info;
+    user_info_req.onreadystatechange = function () {
+        if (user_info_req.readyState === 4 && user_info_req.status === 200) {
+            user_info = JSON.parse(user_info_req.responseText);
+            console.log("USER: ", user_info);
+            let user_posts_req = new XMLHttpRequest();
+            user_posts_req.onreadystatechange = function () {
+                if (user_posts_req.readyState === 4 && user_posts_req.status === 200) {
+                    let all_posts = JSON.parse(user_posts_req.responseText);
+                    for (let post of all_posts) {
+                        console.log("POST: ", post);
+                    }
+                    make_feed({posts: all_posts});
+                    let user_name = document.getElementById("username-span");
+                    user_name.innerText = username;
+                    let img_req = new XMLHttpRequest();
+                    img_req.onreadystatechange = function () {
+                        if (img_req.readyState === 4 && img_req.status === 200) {
+                            let user_pic = document.getElementById("user-pic");
+                            user_pic.src = img_req.responseText;
+                        }
+                    };
+                    img_req.open("GET", "/users/" + username + "/img");
+                    img_req.send();
+                }
+            };
+            user_posts_req.open("GET", "/users/" + username + "/posts");
+            user_posts_req.send();
+
+        }
+    };
+    user_info_req.open("GET", "/users/" + username);
+    user_info_req.send();
+
+
+}
+
+
 function make_post(post_data) {
 
     console.log("POST DATA RECEIVED: ,", post_data);
@@ -60,9 +119,16 @@ function make_post(post_data) {
     user_img_req.send();
     // post.getElementsByTagName("img")[0].src = "https://i.pravatar.cc/48";
     post.getElementsByClassName("post-user")[0].innerHTML = post_data.username;
+    post.getElementsByClassName("post-user")[0].addEventListener("click", () => {
+        console.log("LINK TO USER CLICKED!");
+        show_user(post_data.username);
+        // show_view("view-user");
+    });
     post.getElementsByClassName("post-content")[0].innerHTML = post_data.content;
     let post_timestamp = post_clone.children[0].getElementsByClassName("post-timestamp")[0];
-    post_timestamp.innerText = (new Date(post_data.timestamp).toString());
+    var options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
+    let date_string = new Date(post_data.timestamp).toLocaleDateString("default", options);
+    post_timestamp.innerText = (date_string);
     let comment_section = post.getElementsByClassName("comment-section")[0];
     comment_section.style.display = "none";
     let comment_form = post.getElementsByClassName("comment-form")[0];
@@ -202,6 +268,10 @@ function setup_signup() {
 let timeout = null;
 
 function setup_feed() {
+    let home_btn = document.getElementById("home-button");
+    home_btn.addEventListener("click", () => {
+        show_feed();
+    });
     let new_post_form = document.getElementById("new-post-form");
     new_post_form.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -233,6 +303,8 @@ function setup_feed() {
         e.preventDefault();
         let search_term = document.getElementById("search-input").value;
         console.log("searching for: ", search_term);
+        show_user(search_term);
+
     });
     let search_input = document.getElementById("search-input");
     search_input.addEventListener("input", function (e) {
@@ -251,9 +323,8 @@ function setup_feed() {
             request.open("POST", "searchsuggestion");
             request.send(JSON.stringify({text: this.value}));
         }, 1000);
-
-
     });
+
     let follow_form = document.getElementById("follow-form");
     follow_form.addEventListener("submit", function (e) {
         e.preventDefault();

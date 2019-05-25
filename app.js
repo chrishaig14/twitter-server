@@ -1,6 +1,5 @@
 let http = require("http");
 let fs = require("fs");
-let mysql = require("mysql");
 const {Client} = require("pg");
 
 const DB_URL = process.env.DATABASE_URL;
@@ -11,7 +10,6 @@ if (DB_URL) {
     DATABASE_URL = {host: "localhost", user: "twitterdb", password: "twitterdb", database: "twitterdb"};
 }
 
-// console.log(DATABASE_URL);
 
 const client = new Client(DATABASE_URL);
 client.connect().then(() => client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';")).then((result) => {
@@ -23,8 +21,6 @@ client.connect().then(() => client.query("SELECT table_name FROM information_sch
 });
 
 console.log("Connecting database at:", DATABASE_URL);
-
-let connected_users = [];
 
 var port = process.env.PORT || 8888;
 
@@ -75,40 +71,6 @@ function get_request_body(request, response, on_end) {
         on_end(request, response, request_body);
     });
 }
-
-// const login = (request, response) => {
-//     let body = [];
-//     request.on("data", chunk => {
-//         body.push(chunk);
-//     });
-//     request.on("end", () => {
-//         body = Buffer.concat(body).toString();
-//         console.log(body);
-//         let data = JSON.parse(body);
-//         client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
-//             console.log("ERROR:", error);
-//             console.log("RESULTS:", results.rows);
-//             // console.log("FIELDS:", fields);
-//             if (error === null) {
-//                 if (results.rows.length === 1) {
-//                     console.log("ONE RESULT FOUND!");
-//                     response.writeHead(200);
-//                     response.end();
-//                 } else {
-//                     console.log("NO RESULTS FOUND!");
-//                     response.writeHead(204);
-//                     response.write("NO RESULTS");
-//                     response.end();
-//                 }
-//             } else {
-//                 response.writeHead(202);
-//                 response.write("DATABASE ERROR:", error);
-//                 response.end();
-//             }
-//         });
-//     });
-// };
-
 
 function login_handler(request, response, data) {
     client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
@@ -169,8 +131,6 @@ const get_feed = (request, response) => {
     response.writeHead(200, {"Content-Type": "application/json"});
     client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
         if (error === null) {
-            // console.log(JSON.stringify(results));
-            // response.write(JSON.stringify(;
             console.log("results: ", results.rows);
             response.writeHead(200);
             response.write(JSON.stringify({"posts": results.rows}));
@@ -239,9 +199,6 @@ const new_post = (request, response) => {
 
 
 app.post("/users/{}/posts", new_post);
-
-// app.post("/post", new_post);
-
 
 function new_comment(request, response) {
     let body = [];
@@ -463,7 +420,7 @@ const get_user_image = (request, response) => {
         response.writeHead(200, {"Content-Type": "xxx"});
         response.write(result.rows[0].img);
         response.end();
-    })
+    });
 };
 
 app.get("/users/{}/img", get_user_image);
@@ -471,7 +428,7 @@ app.get("/users/{}/img", get_user_image);
 function match_url(pattern, url) {
     let s_pat = pattern.split("/");
     let s_url = url.split("/");
-    if (s_pat.length != s_url.length) {
+    if (s_pat.length !== s_url.length) {
         return false;
     }
     for (let i = 0; i < s_pat.length; i++) {
@@ -484,8 +441,29 @@ function match_url(pattern, url) {
     return true;
 }
 
+const get_user_info = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    response.writeHead(200, {"Content-Type": "xxx"});
+    response.write(JSON.stringify({username: user_id}));
+    response.end();
+
+};
+
+app.get("/users/{}", get_user_info);
+
+const get_user_posts = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    client.query("SELECT * FROM posts WHERE username = $1;", [user_id], (error, result) => {
+        response.writeHead(200, {"Content-Type": "xxx"});
+        response.write(JSON.stringify(result.rows));
+        response.end();
+    });
+
+};
+
+app.get("/users/{}/posts", get_user_posts);
+
 http.createServer(function (request, response) {
-    // console.log("request:", request);
     let handled = false;
     for (let req of app.requests) {
         // if (match_url(req.url, request.url))

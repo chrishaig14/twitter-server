@@ -91,7 +91,7 @@
 <div class="view" id="view-feed">
     <h1>Feed</h1>
     <div id="header">
-        <button>Home</button>
+        <button id="home-button">Home</button>
         <button>Following</button>
         <form id="search-form">
             <label id="search-label">Search:<input type="text" autocomplete="off" placeholder="search"
@@ -113,7 +113,8 @@
             <div id="new-post" class="post">
                 <span id="new-post-title">New post</span>
                 <form id="new-post-form">
-                    <input id="new-post-content" type="text" placeholder="Your post">
+                    <input id="new-post-content" autocomplete="off" required="required" type="text"
+                           placeholder="Your post">
                     <button id="confirm-new-post-button" type="submit">Post!</button>
                 </form>
             </div>

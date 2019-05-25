@@ -136,6 +136,10 @@ form {
 #create-user-title {
   text-transform: uppercase; }
 
+button:hover {
+  cursor: pointer;
+}
+
 #user-at-symbol {
   font-weight: bold; }
 
