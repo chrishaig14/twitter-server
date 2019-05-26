@@ -152,7 +152,7 @@ button:hover {
   display: flex; }
 
 .post {
-  margin-bottom: 10px;
+    margin-bottom: 20px;
   border-radius: 10px;
   padding: 10px;
   background-color: #ffffff;
@@ -222,7 +222,12 @@ button:hover {
   background-color: #ffffff;
   margin-bottom: 10px;
   padding: 10px;
-  border-radius: 10px; }
+    display: flex;
+    align-items: center;
+    min-width: fit-content;
+    border-radius: 10px;
+    justify-content: space-evenly;
+}
 
 .comment-section {
   background-color: #daebff;
