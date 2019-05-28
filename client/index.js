@@ -1,7 +1,7 @@
 var current_user = "";
 var token = "mytoken";
 
-////
+//////
 function show_view(view) {
     let views = document.getElementsByClassName("view");
 
