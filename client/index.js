@@ -16,8 +16,8 @@ function show_feed() {
     let feed_request = new XMLHttpRequest();
     feed_request.onreadystatechange = function () {
         if (feed_request.readyState === 4 && feed_request.status === 200) {
-            console.log(feed_request.responseText);
-            console.log("FEED DATA RECEIVED:", feed_request.responseText);
+            // console.log(feed_request.responseText);
+            // console.log("FEED DATA RECEIVED:", feed_request.responseText);
             make_feed(JSON.parse(feed_request.responseText));
 
             let pic_request = new XMLHttpRequest();
@@ -26,9 +26,9 @@ function show_feed() {
                 if (pic_request.readyState === 4 && pic_request.status === 200) {
                     let user_pic = document.getElementById("user-pic");
 
-                    console.log("received:::", JSON.parse(pic_request.responseText));
+                    // console.log("received:::", JSON.parse(pic_request.responseText));
                     user_pic.src = JSON.parse(pic_request.responseText)[0].img;
-                    console.log("received image ok!");
+                    // console.log("received image ok!");
                 }
             };
             pic_request.open("POST", "userpicture");
@@ -37,7 +37,7 @@ function show_feed() {
     };
     feed_request.open("GET", "feed");
     feed_request.setRequestHeader("Authorization", "Basic " + str_obj(document.cookie).current_user);
-    console.log("current_user:", current_user);
+    // console.log("current_user:", current_user);
     feed_request.send();
     // feed_request.send(JSON.stringify({username: str_obj(document.cookie).current_user}));
     document.cookie = "state=feed;";
@@ -198,9 +198,15 @@ function make_post(post_data) {
             if (this.readyState === 4 && this.status === 200) {
                 console.log("COMMENT ADDED OK!");
                 console.log(new Date());
-                let comment_template = comment_section.getElementsByClassName("comment")[0];
-                let new_comment = comment_template.cloneNode(true);
+
+                let comment_template = document.getElementById("comment-template");
+                let new_comment = comment_template.content.cloneNode(true).children[0];
                 let new_content = new_comment.getElementsByClassName("comment-content")[0];
+
+
+                // let comment_template = comment_section.getElementsByClassName("comment")[0];
+                // let new_comment = comment_template.cloneNode(true);
+                // let new_content = new_comment.getElementsByClassName("comment-content")[0];
                 new_content.innerText = content;
                 let comment_user = new_comment.getElementsByClassName("comment-user")[0];
                 comment_user.innerText = current_user;
@@ -242,6 +248,8 @@ function make_post(post_data) {
 
 function make_feed(feed_data) {
     show_view("view-feed");
+
+
     let post_container = document.getElementById("post-container");
     let new_post_form = post_container.children[0];
     while (post_container.firstChild) {
@@ -273,6 +281,11 @@ function setup_login() {
                     console.log("LOGIN OK");
                     current_user = document.getElementById("login-username-input").value;
                     document.cookie = "current_user=" + current_user;
+                    document.getElementById("profile-pic-label").style.display = "block";
+                    let follow_button = document.getElementById("follow-button");
+                    let unfollow_button = document.getElementById("unfollow-button");
+                    follow_button.style.display = "none";
+                    unfollow_button.style.display = "none";
                     show_feed();
                 } else {
                     let result = document.getElementById("login-result");
@@ -325,6 +338,11 @@ let timeout = null;
 function setup_feed() {
     let home_btn = document.getElementById("home-button");
     home_btn.addEventListener("click", () => {
+        document.getElementById("profile-pic-label").style.display = "block";
+        let follow_button = document.getElementById("follow-button");
+        let unfollow_button = document.getElementById("unfollow-button");
+        follow_button.style.display = "none";
+        unfollow_button.style.display = "none";
         show_feed();
     });
     let new_post_form = document.getElementById("new-post-form");
