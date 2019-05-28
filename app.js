@@ -135,9 +135,13 @@ const get_feed = (request, response) => {
     client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
         if (error === null) {
             console.log("results: ", results.rows);
-            response.writeHead(200);
-            response.write(JSON.stringify({"posts": results.rows}));
-            response.end();
+            client.query("SELECT * FROM posts WHERE username = $1;", [username], function (error, results2, fields) {
+                response.writeHead(200);
+                response.write(JSON.stringify({"posts": results2.rows.concat(results.rows)}));
+                response.end();
+            });
+
+
         } else {
             console.log("ERROR: ", error);
             response.writeHead(204);
