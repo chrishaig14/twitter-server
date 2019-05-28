@@ -83,7 +83,7 @@ function show_user(username) {
                         follow_button.style.display = "none";
                     }
                     console.log("NOW FOLLOWING USER:", username);
-                }
+                };
                 xhr.open("PUT", "/users/" + current_user + "/followees/" + username);
                 xhr.send();
             }
@@ -97,7 +97,7 @@ function show_user(username) {
                 }
 
                 console.log("STOPPED FOLLOWING USER:", username);
-            }
+            };
             xhr.open("DELETE", "/users/" + current_user + "/followees/" + username);
             xhr.send();
         });
