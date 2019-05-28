@@ -257,11 +257,22 @@ button:hover {
   margin-bottom: 10px;
   padding: 10px;
   border-radius: 10px;
+  display: flex;
+  align-items: center;
 }
 
 .comment-section {
   background-color: lighten($primary, 20%);
   margin-top: 10px;
+}
+
+.comment-form {
+  display: flex;
+  align-items: stretch;
+}
+
+#confirm-comment {
+  align-self: flex-start;
 }
 
 .comment, .comment-form {

@@ -38,6 +38,9 @@ let app = {
     },
     "put": function (url, handler) {
         this.add_request(url, "PUT", handler);
+    },
+    "delete": function (url, handler) {
+        this.add_request(url, "DELETE", handler);
     }
 };
 
@@ -158,8 +161,15 @@ const new_user = (request, response) => {
         client.query("INSERT INTO users VALUES($1, $2)", [data.username, data.password]).then((result) => {
             console.log("RESULTS:", result.rows);
             // client.end();
-            response.writeHead(200);
-            response.end();
+            client.query("INSERT INTO imgs VALUES($1, $2)", [data.username, ""]).then((result) => {
+                console.log("RESULTS:", result.rows);
+                // client.end();
+                response.writeHead(200);
+                response.end();
+            }).catch((e) => {
+                console.log("ERROR:", e);
+                // client.end();
+            });
         }).catch((e) => {
             console.log("ERROR:", e);
             // client.end();
@@ -210,7 +220,8 @@ function new_comment(request, response) {
         console.log(body);
         let data = JSON.parse(body);
         console.log(data);
-        client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4)", [data.username, data.content, data.parent, data.post], function (error, results) {
+        let post_id = request.url.split("/")[2];
+        client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4)", [data.username, data.content, data.parent, post_id], function (error, results) {
             if (error == null) {
                 response.writeHead(200);
                 console.log("NEW COMMENT ADDED!");
@@ -224,69 +235,25 @@ function new_comment(request, response) {
     });
 }
 
-app.post("/postcomment", new_comment);
+app.post("/posts/{}/comments", new_comment);
 
 const get_comments = (request, response) => {
-    let body = [];
-    request.on("data", chunk => {
-        body.push(chunk);
-    });
-    request.on("end", () => {
-        body = Buffer.concat(body).toString();
-        console.log(body);
-        let data = JSON.parse(body);
-        console.log(data);
-        client.query("select * from comments where post = $1;", [data.post], function (error, results) {
-            if (error == null) {
-                response.writeHead(200);
-                response.write(JSON.stringify(results.rows));
-                console.log("COMMENTS FOR POST;", data.post, ":", results.rows);
-                response.end();
-            } else {
-                response.writeHead(204);
-                console.log("ERROR:", error);
-                response.end();
-            }
-        });
-    });
-
-};
-
-app.get("/comments", get_comments);
-
-const follow_user = (request, response) => {
-    let body = [];
-    request.on("data", chunk => {
-        body.push(chunk);
-    });
-    request.on("end", () => {
-        body = Buffer.concat(body).toString();
-        console.log(body);
-        if (body === undefined) {
-            console.log("body is undefined!");
+    let post_id = request.url.split("/")[2];
+    client.query("SELECT * FROM comments WHERE post = $1;", [post_id], function (error, results) {
+        if (error == null) {
+            response.writeHead(200);
+            response.write(JSON.stringify(results.rows));
+            console.log("COMMENTS FOR POST;", post_id, ":", results.rows);
+            response.end();
+        } else {
+            response.writeHead(204);
+            console.log("ERROR:", error);
+            response.end();
         }
-        console.log("data received:", body);
-
-        let data = JSON.parse(body);
-        client.query("INSERT INTO followers (follower, followee) VALUES ($1, $2);", [data.username, data.follow], function (error, results) {
-            if (error == null) {
-                console.log("NO ERROR");
-                if (results.length > 0) {
-                    response.writeHead(200);
-                    response.end();
-                }
-            } else {
-                console.log("THERE WAS AN ERROR!");
-                response.writeHead(400);
-                response.write("ERROR!");
-                response.end();
-            }
-        });
     });
 };
 
-app.put("/users/{}/followees/{}", follow_user);
-
+app.get("/posts/{}/comments", get_comments);
 
 const post_search = (request, response) => {
     let body = [];
@@ -416,9 +383,13 @@ const get_user_image = (request, response) => {
     let user_id = request.url.split("/")[2];
     client.query("SELECT img FROM imgs WHERE username = $1;", [user_id], (error, result) => {
         console.log("user_id:", user_id);
-        console.log(result.rows[0].img.substr(0, 10));
+        // console.log(result.rows[0].img.substr(0, 10));
         response.writeHead(200, {"Content-Type": "xxx"});
-        response.write(result.rows[0].img);
+        if (!result.rows[0].hasOwnProperty("img")) {
+            response.write("");
+        } else {
+            response.write(result.rows[0].img);
+        }
         response.end();
     });
 };
@@ -462,6 +433,48 @@ const get_user_posts = (request, response) => {
 };
 
 app.get("/users/{}/posts", get_user_posts);
+
+const get_followee = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    let followee_id = request.url.split("/")[4];
+    client.query("SELECT * FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
+        if (result.rows.length === 0) {
+            response.writeHead(204, {"Content-Type": "xxx"});
+            response.end();
+        } else {
+            response.writeHead(200, {"Content-Type": "xxx"});
+            response.end();
+        }
+    });
+};
+
+app.get("/users/{}/followees/{}", get_followee);
+
+const delete_followee = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    let followee_id = request.url.split("/")[4];
+    client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
+        response.writeHead(200, {"Content-Type": "xxx"});
+        response.end();
+    });
+};
+
+app.delete("/users/{}/followees/{}", delete_followee);
+
+const put_followee = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    let followee_id = request.url.split("/")[4];
+    client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
+        client.query("INSERT INTO followers (follower,followee) VALUES ($1,$2);", [user_id, followee_id], (error, result) => {
+            response.writeHead(200, {"Content-Type": "xxx"});
+            response.write("{}");
+            response.end();
+        });
+    });
+
+};
+
+app.put("/users/{}/followees/{}", put_followee);
 
 http.createServer(function (request, response) {
     let handled = false;

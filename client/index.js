@@ -63,6 +63,60 @@ let Request = function () {
 };
 
 function show_user(username) {
+    console.log("### USERNAME: ", username, " ### CURRENT USER:", current_user);
+    if (username !== current_user) {
+        console.log("SEEING ANOTHER USER");
+        document.getElementById("profile-pic-label").style.display = "none";
+        let follow_button_o = document.getElementById("follow-button");
+        let follow_button = follow_button_o.cloneNode(true);
+
+        follow_button_o.parentElement.replaceChild(follow_button, follow_button_o);
+        let unfollow_button_o = document.getElementById("unfollow-button");
+        let unfollow_button = unfollow_button_o.cloneNode(true);
+        unfollow_button_o.parentElement.replaceChild(unfollow_button, unfollow_button_o);
+        follow_button.addEventListener("click", function () {
+                let xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+
+                        unfollow_button.style.display = "block";
+                        follow_button.style.display = "none";
+                    }
+                    console.log("NOW FOLLOWING USER:", username);
+                }
+                xhr.open("PUT", "/users/" + current_user + "/followees/" + username);
+                xhr.send();
+            }
+        );
+        unfollow_button.addEventListener("click", function () {
+            let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    unfollow_button.style.display = "none";
+                    follow_button.style.display = "block";
+                }
+
+                console.log("STOPPED FOLLOWING USER:", username);
+            }
+            xhr.open("DELETE", "/users/" + current_user + "/followees/" + username);
+            xhr.send();
+        });
+        let req = new XMLHttpRequest();
+        req.onreadystatechange = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                follow_button.style.display = "none";
+                unfollow_button.style.display = "block";
+                console.log("FOLLOWING!!!");
+            } else if (req.readyState === 4 && req.status === 204) {
+                follow_button.style.display = "block";
+                unfollow_button.style.display = "none";
+                console.log("NOT FOLLOWING!!!");
+            }
+        };
+        req.open("GET", "/users/" + current_user + "/followees/" + username);
+        req.send();
+    }
+
     let user_info_req = new XMLHttpRequest();
     let user_info;
     user_info_req.onreadystatechange = function () {
@@ -155,8 +209,8 @@ function make_post(post_data) {
                 console.log("COULD NOT POST COMMENT!");
             }
         };
-        request.open("POST", "postcomment");
-        request.send(JSON.stringify({username: current_user, content: content, parent: -1, post: post_data.id}));
+        request.open("POST", "/posts/" + post_data.id + "/comments");
+        request.send(JSON.stringify({username: current_user, content: content, parent: -1}));
     });
     let reply_button = post.getElementsByClassName("reply-button")[0];
     reply_button.addEventListener("click", () => {
@@ -169,8 +223,9 @@ function make_post(post_data) {
                 console.log("COMMENTS RECEVIED FOR POST ", post_data.id, request.responseText);
                 let comments = JSON.parse(request.responseText);
                 for (let comment of comments) {
-                    let comment_template = comment_section.getElementsByClassName("comment")[0];
-                    let new_comment = comment_template.cloneNode(true);
+                    let comment_template = document.getElementById("comment-template");
+                    let new_comment = comment_template.content.cloneNode(true).children[0];
+                    console.log(new_comment);
                     let content = new_comment.getElementsByClassName("comment-content")[0];
                     content.innerText = comment.content;
                     let comment_user = new_comment.getElementsByClassName("comment-user")[0];
@@ -179,8 +234,8 @@ function make_post(post_data) {
                 }
             }
         };
-        request.open("POST", "comments");
-        request.send(JSON.stringify({post: post_data.id}));
+        request.open("GET", "/posts/" + post_data.id + "/comments");
+        request.send();
     });
     return post_clone;
 }
@@ -337,7 +392,7 @@ function setup_feed() {
             }
         };
         request.open("PUT", "/users/" + current_user + "/followees/" + search_term);
-        request.send(JSON.stringify({username: current_user, follow: search_term}));
+        request.send();
     });
     let logout_button = document.getElementById("logout-button");
     logout_button.addEventListener("click", () => {

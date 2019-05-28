@@ -8,7 +8,13 @@
           rel="stylesheet">
 </head>
 <body>
-
+<template id="comment-template">
+    <div class="comment">
+        <div class="comment-user"></div>
+        <div class="comment-content">This is a comment</div>
+        <button>Reply</button>
+    </div>
+</template>
 <template id="post-template">
     <div class="post">
         <div class="post-header">
@@ -29,12 +35,7 @@
                 <input class="comment-input" type="text" placeholder="your comment">
                 <button type="submit" id="confirm-comment">Comment</button>
             </form>
-            <div class="comment">
-                <div class="comment-user"></div>
-                <div class="comment-content">This is a comment</div>
 
-                <button>Reply</button>
-            </div>
         </div>
     </div>
 </template>
@@ -108,6 +109,8 @@
             <img id="user-pic" src="https://i.pravatar.cc/150">
             <span class="text">Logged in as <span id="username-span"></span></span>
             <label id="profile-pic-label">Change profile pic<input type="file" id="profile-pic-file"></label>
+            <button id="follow-button">Follow</button>
+            <button id="unfollow-button">Unfollow</button>
         </div>
         <div id="post-container">
             <div id="new-post" class="post">
