@@ -1,6 +1,8 @@
 let http = require("http");
 let fs = require("fs");
 const {Client} = require("pg");
+var url = require("url");
+const queryString = require("query-string");
 
 const DB_URL = process.env.DATABASE_URL;
 let DATABASE_URL;
@@ -57,7 +59,7 @@ const get_index = (request, response) => {
         response.writeHead(200, {"Content-Type": "text/html"});
         response.write(data);
         response.end();
-    })
+    });
 };
 
 app.get("/", get_index);
@@ -69,9 +71,15 @@ function get_request_body(request, response, on_end) {
     });
     request.on("end", () => {
         body = Buffer.concat(body).toString();
-        console.log(body);
-        let request_body = JSON.parse(body);
-        on_end(request, response, request_body);
+        console.log("BODY:", body);
+        try {
+            let request_body = JSON.parse(body);
+            on_end(request, response, request_body);
+        } catch (e) {
+            console.log("THERE WAS A FOCKING ERROR YOU TWAT!");
+            response.writeHead(400, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
+            response.end();
+        }
     });
 }
 
@@ -83,12 +91,18 @@ function login_handler(request, response, data) {
         if (error === null) {
             if (results.rows.length === 1) {
                 console.log("ONE RESULT FOUND!");
-                response.writeHead(200);
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
+                response.setHeader("Authorization", data.username);
+                response.writeHead(204);
+                // response.write(JSON.stringify({"str":data.username}));
                 response.end();
             } else {
                 console.log("NO RESULTS FOUND!");
-                response.writeHead(204);
-                response.write("NO RESULTS");
+                // response.writeHead(204);
+                response.writeHead(401, {"Access-Control-Allow-Origin": "*"});
+                response.write("NOTOK NOTOK NOTOK NOTOK NOTOK");
                 response.end();
             }
         } else {
@@ -123,28 +137,36 @@ const get_index_js = (request, response) => {
 };
 
 app.get("/styles.css", get_styles_css);
-4
+
 app.get("/index.js", get_index_js);
 
 const get_feed = (request, response) => {
 
-    let username = request.headers["authorization"].split(" ")[1];
+    console.log("headers: ", request.headers);
+    let username = request.headers["authorization"];
     console.log("USERNAME:::", username);
     // console.log("received:", data);
-    response.writeHead(200, {"Content-Type": "application/json"});
+    // response.writeHead(200, {'Access-Control-Allow-Origin':'*', "Content-Type": "application/json"});
     client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
         if (error === null) {
             console.log("results: ", results.rows);
+
             client.query("SELECT * FROM posts WHERE username = $1;", [username], function (error, results2, fields) {
-                response.writeHead(200);
-                response.write(JSON.stringify({"posts": results2.rows.concat(results.rows)}));
-                response.end();
+                response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
+                let posts = results2.rows.concat(results.rows);
+                console.log("POSTS: ", result.rows);
+                console.log("POSTS: ", results2.rows);
+                console.log("POSTS: ", posts);
+                client.query("SELECT * FROM shares WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results3, fields) {
+                        response.write(JSON.stringify({posts: posts, shares: results3.rows}));
+                        response.end();
+                    }
+                );
             });
-
-
         } else {
             console.log("ERROR: ", error);
-            response.writeHead(204);
+            // response.writeHead(204);
+            response.writeHead(204, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
             response.end();
         }
     });
@@ -162,20 +184,26 @@ const new_user = (request, response) => {
         body = Buffer.concat(body).toString();
         console.log(body);
         let data = JSON.parse(body);
-        client.query("INSERT INTO users VALUES($1, $2)", [data.username, data.password]).then((result) => {
-            console.log("RESULTS:", result.rows);
+        client.query("INSERT INTO users VALUES($1, $2) RETURNING *", [data.username, data.password]).then((result) => {
+            console.log("result: ", result);
+            console.log("NO ERROR! RESULTS:", result.rows);
+
             // client.end();
             client.query("INSERT INTO imgs VALUES($1, $2)", [data.username, ""]).then((result) => {
                 console.log("RESULTS:", result.rows);
                 // client.end();
-                response.writeHead(200);
+                console.log("ONE RESULT FOUND!");
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
+                response.writeHead(204);
                 response.end();
             }).catch((e) => {
-                console.log("ERROR:", e);
+                console.log("ERROR INSERTING IMAGE:", e);
                 // client.end();
             });
         }).catch((e) => {
-            console.log("ERROR:", e);
+            console.log("ERROR CREATING USER:", e);
             // client.end();
         });
 
@@ -185,23 +213,32 @@ const new_user = (request, response) => {
 
 app.post("/users", new_user);
 
+const share_post = (request, response) => {
 
-const new_post = (request, response) => {
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
     });
     request.on("end", () => {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        let username = request.headers["authorization"];
+        console.log("posting for user: ", username);
         body = Buffer.concat(body).toString();
         console.log(body);
         let data = JSON.parse(body);
         console.log(data);
         let timestamp = new Date().toISOString();
-        client.query("INSERT INTO posts (username, content, timestamp) VALUES ($1, $2, $3)", [data.username, data.post.content, timestamp], function (error, results) {
+        client.query("INSERT INTO shares (username, post_id, timestamp) VALUES ($1, $2, $3) RETURNING *", [username, data.post_id, timestamp], function (error, results) {
             if (error == null) {
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(200);
-                console.log("NEW POST ADDED!");
+                response.write(JSON.stringify(results.rows[0]));
+                // console.log("SENDING:" , JSON.stringify(results.rows[0]));
+                // console.log("NEW POST ADDED!");
                 response.end();
+
             } else {
                 response.writeHead(204);
                 console.log("ERROR:", error);
@@ -212,9 +249,54 @@ const new_post = (request, response) => {
 };
 
 
-app.post("/users/{}/posts", new_post);
+app.post("/shares", share_post);
+
+
+const new_post = (request, response) => {
+
+    let body = [];
+    request.on("data", chunk => {
+        body.push(chunk);
+    });
+    request.on("end", () => {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        let username = request.headers["authorization"];
+        console.log("posting for user: ", username);
+        body = Buffer.concat(body).toString();
+        console.log(body);
+        let data = JSON.parse(body);
+        console.log(data);
+        let timestamp = new Date().toISOString();
+        client.query("INSERT INTO posts (username, content, timestamp, retweet) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, timestamp, data.retweet], function (error, results) {
+            if (error == null) {
+
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
+                response.writeHead(200);
+                // console.log("RESULTS: ", results);
+                // console.log("ADDED NEW POST: ", results.rows);
+                response.write(JSON.stringify(results.rows[0]));
+                console.log("SENDING:", JSON.stringify(results.rows[0]));
+                console.log("NEW POST ADDED!");
+                response.end();
+
+            } else {
+                response.writeHead(204);
+                console.log("ERROR:", error);
+                response.end();
+            }
+        });
+    });
+};
+
+
+app.post("/posts", new_post);
 
 function new_comment(request, response) {
+    let token = request.headers["authorization"];
+    let username = token;
+
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -225,13 +307,17 @@ function new_comment(request, response) {
         let data = JSON.parse(body);
         console.log(data);
         let post_id = request.url.split("/")[2];
-        client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4)", [data.username, data.content, data.parent, post_id], function (error, results) {
+        client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, data.parent, post_id], function (error, results) {
             if (error == null) {
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(200);
+                response.write(JSON.stringify(results.rows[0]));
                 console.log("NEW COMMENT ADDED!");
                 response.end();
             } else {
-                response.writeHead(204);
+                response.writeHead(401);
                 console.log("ERROR:", error);
                 response.end();
             }
@@ -245,6 +331,9 @@ const get_comments = (request, response) => {
     let post_id = request.url.split("/")[2];
     client.query("SELECT * FROM comments WHERE post = $1;", [post_id], function (error, results) {
         if (error == null) {
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
             response.writeHead(200);
             response.write(JSON.stringify(results.rows));
             console.log("COMMENTS FOR POST;", post_id, ":", results.rows);
@@ -258,6 +347,27 @@ const get_comments = (request, response) => {
 };
 
 app.get("/posts/{}/comments", get_comments);
+
+const get_post = (request, response) => {
+    let post_id = request.url.split("/")[2];
+    client.query("SELECT * FROM posts WHERE id = $1;", [post_id], function (error, results) {
+        if (error == null) {
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(200);
+            response.write(JSON.stringify(results.rows[0]));
+            console.log("RETURNING POST DATA", post_id, ":", results.rows);
+            response.end();
+        } else {
+            response.writeHead(204);
+            console.log("ERROR:", error);
+            response.end();
+        }
+    });
+};
+
+app.get("/posts/{}", get_post);
 
 const post_search = (request, response) => {
     let body = [];
@@ -273,17 +383,24 @@ const post_search = (request, response) => {
         console.log("data received:", body);
 
         let data = JSON.parse(body);
-        client.query("SELECT * FROM users WHERE username = ?;", [data.search_term], function (error, results) {
+        client.query("SELECT * FROM users WHERE username = $1;", [data.search_term], function (error, results) {
             if (error == null) {
                 console.log("NO ERROR");
-                if (results.length > 0) {
-                    console.log(results.rows);
+                console.log("RESULTS:::: ", results);
+                console.log("SEARCHTERM: ", data.search_term);
+                if (results.rows.length > 0) {
+                    console.log("RESULTS:", results.rows);
+                    response.setHeader("Content-Type", "application/json");
+                    response.setHeader("Access-Control-Allow-Origin", "*");
+                    response.setHeader("Access-Control-Expose-Headers", "Authorization");
                     response.writeHead(200);
-                    response.write(JSON.stringify(results[0]));
+                    response.write(JSON.stringify(results.rows));
                     response.end();
                 }
             } else {
-                console.log("THERE WAS AN ERROR!");
+
+                console.log("SERACH: THERE WAS AN ERROR!: ", error);
+                console.log("RESULTS: ", results);
                 response.writeHead(400);
                 response.write("ERROR!");
                 response.end();
@@ -295,24 +412,33 @@ const post_search = (request, response) => {
 app.post("/search", post_search);
 
 const put_userpic = (request, response) => {
+    let token = request.headers["authorization"];
+    let username = token;
+
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
     });
     request.on("end", () => {
         body = Buffer.concat(body).toString();
-        let data = JSON.parse(body);
-        client.query("UPDATE imgs SET img = $2 WHERE username = $1;", [data.username, data.img], function (error, results) {
+        // let data = JSON.parse(body);
+        img = body;
+        console.log("UPDATING IMAGE OF USER:", username, " img=", img.slice(20, 40));
+        client.query("UPDATE imgs SET img = $2 WHERE username = $1;", [username, img], function (error, results) {
+            console.log("ERROR: ", error);
+            console.log("UPDATE IMAGE RESULTS: ", results);
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(200);
                 response.end();
-                console.log(data.img);
+            // console.log(data.img);
                 console.log("ERROR:", error);
             }
         );
     });
 };
 
-app.put("/userpic", put_userpic);
+app.put("/users/me/img", put_userpic);
 
 const post_userpicture = (request, response) => {
     let body = [];
@@ -334,50 +460,54 @@ const post_userpicture = (request, response) => {
 
 app.post("/userpicture", post_userpicture);
 
-const post_searchsuggestion = (request, response) => {
-    let body = [];
-    request.on("data", chunk => {
-        body.push(chunk);
-    });
-    request.on("end", () => {
-        body = Buffer.concat(body).toString();
-        console.log(body);
-        if (body === undefined) {
-            console.log("body is undefined!");
-        }
-        console.log("data received:", body);
+const get_search = (request, response) => {
+    let url_parsed = url.parse(request.url);
+    let qstring = queryString.parse(url_parsed.search);
+    console.log("######## SEARCH URL : ", url_parsed.search);
+    console.log("######## QUERY : ", qstring);
 
-        let data = JSON.parse(body);
-        console.log("data.text:", data.text);
-        client.query("SELECT * FROM users WHERE username LIKE $1;", ['%' + data.text + '%'], function (error, results) {
-            if (error == null) {
-                console.log("NO ERROR");
-                console.log("REUSLTS:", results);
-                if (results.rows.length > 0) {
-                    console.log("RESULTS:", results.rows);
-                    response.writeHead(200);
-                    response.write(JSON.stringify(results.rows));
-                    response.end();
-                } else {
-                    response.writeHead(200);
-                    response.write("{}");
-                    response.end();
-                }
+    client.query("SELECT username FROM users WHERE username LIKE $1;", ["%" + qstring.term + "%"], function (error, results) {
+        if (error == null) {
+            console.log("NO ERROR");
+            console.log("REUSLTS:", results);
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            if (results.rows.length > 0) {
+                console.log("RESULTS:", results.rows);
+
+                response.writeHead(200);
+                response.write(JSON.stringify(results.rows));
+                response.end();
             } else {
-                console.log("ERRROR:", error);
-                console.log("THERE WAS AN ERROR!");
-                response.writeHead(400);
-                response.write("ERROR!");
+                response.writeHead(200);
+                response.write("[]");
                 response.end();
             }
-        });
+        } else {
+            console.log("ERRROR:", error);
+            console.log("THERE WAS AN ERROR!");
+            response.writeHead(400);
+            response.write("ERROR!");
+            response.end();
+        }
     });
 };
 
-app.post("/searchsuggestion", post_searchsuggestion);
+app.get("/search", get_search);
 
 app.default = function (request, response) {
     console.log("NOT FOUND:", request.method, request.url);
+    if (request.method === "OPTIONS") {
+        response.setHeader("Access-Control-Allow-Methods", "DELETE, PUT");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.writeHead(204);
+        response.end();
+        console.log("SENT OPTIONS RESPONSE OK!");
+        1;
+        return;
+    }
     response.writeHead(404);
     response.end();
 };
@@ -385,13 +515,23 @@ app.default = function (request, response) {
 const get_user_image = (request, response) => {
     console.log("GETTING USER IMAGE!!!!");
     let user_id = request.url.split("/")[2];
+
     client.query("SELECT img FROM imgs WHERE username = $1;", [user_id], (error, result) => {
         console.log("user_id:", user_id);
         // console.log(result.rows[0].img.substr(0, 10));
-        response.writeHead(200, {"Content-Type": "xxx"});
-        if (!result.rows[0].hasOwnProperty("img")) {
+        // response.setHeader("Content-Type","application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+
+        if (result.rows.length === 0) {
+            response.writeHead(404);
+        } else if (!result.rows[0].hasOwnProperty("img")) {
+            response.writeHead(200);
             response.write("");
         } else {
+            // console.log("returning ", result.rows[0])
+            console.log("RETURNING USER IMAGE: ", user_id);
+            response.writeHead(200);
             response.write(result.rows[0].img);
         }
         response.end();
@@ -403,6 +543,11 @@ app.get("/users/{}/img", get_user_image);
 function match_url(pattern, url) {
     let s_pat = pattern.split("/");
     let s_url = url.split("/");
+    let q_string = s_url[s_url.length - 1];
+    q_string = q_string.split("?");
+    s_url[s_url.length - 1] = q_string[0];
+    // console.log("Q_STRING: ", q_string);
+    console.log("S_URL: ", s_url);
     if (s_pat.length !== s_url.length) {
         return false;
     }
@@ -418,9 +563,27 @@ function match_url(pattern, url) {
 
 const get_user_info = (request, response) => {
     let user_id = request.url.split("/")[2];
-    response.writeHead(200, {"Content-Type": "xxx"});
-    response.write(JSON.stringify({username: user_id}));
-    response.end();
+    if (user_id === "me") {
+        user_id = request.headers["authorization"];
+    }
+
+    client.query("SELECT img FROM imgs WHERE username = $1", [user_id], function (error, result) {
+            if (error === null) {
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
+                console.log("RESULT: ", result.rows[0].hasOwnProperty("img"));
+                response.writeHead(200);
+                let pic = result.rows[0]["img"];
+                response.write(JSON.stringify({username: user_id, pic: pic, info: ""}));
+
+                response.end();
+            } else {
+                response.writeHead(401);
+                response.end();
+            }
+        }
+    );
 
 };
 
@@ -429,7 +592,10 @@ app.get("/users/{}", get_user_info);
 const get_user_posts = (request, response) => {
     let user_id = request.url.split("/")[2];
     client.query("SELECT * FROM posts WHERE username = $1;", [user_id], (error, result) => {
-        response.writeHead(200, {"Content-Type": "xxx"});
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(200);
         response.write(JSON.stringify(result.rows));
         response.end();
     });
@@ -440,13 +606,24 @@ app.get("/users/{}/posts", get_user_posts);
 
 const get_followee = (request, response) => {
     let user_id = request.url.split("/")[2];
+    if (user_id === "me") {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        user_id = request.headers["authorization"];
+        // response.write(JSON.stringify({username: token}));
+    }
     let followee_id = request.url.split("/")[4];
     client.query("SELECT * FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
         if (result.rows.length === 0) {
-            response.writeHead(204, {"Content-Type": "xxx"});
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(204);
             response.end();
         } else {
-            response.writeHead(200, {"Content-Type": "xxx"});
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(200);
             response.end();
         }
     });
@@ -454,11 +631,42 @@ const get_followee = (request, response) => {
 
 app.get("/users/{}/followees/{}", get_followee);
 
+const get_followees = (request, response) => {
+    let user_id = request.url.split("/")[2];
+    if (user_id === "me") {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        user_id = request.headers["authorization"];
+        // response.write(JSON.stringify({username: token}));
+    }
+    // let followee_id = request.url.split("/")[4];
+    client.query("SELECT followee FROM followers WHERE follower = $1", [user_id], (error, result) => {
+        console.log("SENDING RESULTS: ", result.rows);
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(200);
+        response.write(JSON.stringify(result.rows));
+        response.end();
+    });
+};
+
+app.get("/users/{}/followees", get_followees);
+
 const delete_followee = (request, response) => {
     let user_id = request.url.split("/")[2];
+    if (user_id === "me") {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        user_id = request.headers["authorization"];
+        // response.write(JSON.stringify({username: token}));
+    }
     let followee_id = request.url.split("/")[4];
     client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
-        response.writeHead(200, {"Content-Type": "xxx"});
+
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Methods", "DELETE");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(204);
         response.end();
     });
 };
@@ -467,11 +675,20 @@ app.delete("/users/{}/followees/{}", delete_followee);
 
 const put_followee = (request, response) => {
     let user_id = request.url.split("/")[2];
+    if (user_id === "me") {
+        console.log("HEADERS RECEIVED ARE: ", request.headers);
+        user_id = request.headers["authorization"];
+        // response.write(JSON.stringify({username: token}));
+    }
     let followee_id = request.url.split("/")[4];
     client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
         client.query("INSERT INTO followers (follower,followee) VALUES ($1,$2);", [user_id, followee_id], (error, result) => {
-            response.writeHead(200, {"Content-Type": "xxx"});
-            response.write("{}");
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Methods", "DELETE");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(204);
+            // response.write("{}");
             response.end();
         });
     });
@@ -492,6 +709,7 @@ http.createServer(function (request, response) {
     }
     if (!handled) {
         console.log("ERROR: no match for: ", request.url);
+
         app.default(request, response);
     }
 }).listen(port);
