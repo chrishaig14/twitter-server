@@ -302,6 +302,13 @@ const new_post = (request, response) => {
             try {
                 let new_post = await client.query("INSERT INTO posts (username, content, timestamp, retweet) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, timestamp, data.retweet]);
                 new_post = new_post.rows[0];
+                new_post.shares = [];
+                new_post.retweet = await client.query("SELECT * FROM posts WHERE id = $1;", [new_post.retweet]);
+                if (new_post.retweet.rows.length === 0) {
+                    new_post.retweet = null;
+                } else {
+                    new_post.retweet = new_post.retweet.rows[0];
+                }
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
