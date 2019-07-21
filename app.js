@@ -401,18 +401,24 @@ app.default = function (request, response) {
     response.end();
 };
 
-const get_user_image = (request, response) => {
+const get_user_image = async (request, response) => {
 
     let user_id = request.url.split("/")[2];
 
-    client.query("SELECT img FROM imgs WHERE username = $1;", [user_id], (error, result) => {
-        if (error === null) {
-            select_callback(result.rows[0].img, response);
-        } else {
-            response.writeHead(404);
-            response.end();
-        }
-    });
+    try {
+        let img = await client.query("SELECT img FROM imgs WHERE username = $1;", [user_id]);
+        img = img.rows[0];
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(200);
+        response.write(img.img);
+        response.end();
+    } catch (error) {
+        console.log("THERE WAS AN ERROR: ", error);
+        response.writeHead(401);
+        response.end();
+    }
 };
 
 app.get("/users/{}/img", get_user_image);
