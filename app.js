@@ -189,6 +189,16 @@ const get_feed = async (request, response) => {
             posts[index] = post;
             console.log("POST SHARES: ", post.shares);
         }
+        for (let [index, post] of posts.entries()) {
+            post.retweet = await client.query("SELECT * FROM posts WHERE id = $1;", [post.retweet]);
+            if (post.retweet.rows.length === 0) {
+                post.retweet = null;
+            } else {
+                post.retweet = post.retweet.rows[0];
+            }
+            posts[index] = post;
+        }
+
         console.log("POSTS: ", posts);
         response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
 
