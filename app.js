@@ -242,34 +242,31 @@ const new_post = (request, response) => {
     request.on("data", chunk => {
         body.push(chunk);
     });
-    request.on("end", () => {
+    request.on("end", async () => {
 
-        let username = request.headers["authorization"];
+            let username = request.headers["authorization"];
 
-        body = Buffer.concat(body).toString();
+            body = Buffer.concat(body).toString();
 
-        let data = JSON.parse(body);
+            let data = JSON.parse(body);
 
-        let timestamp = new Date().toISOString();
-        client.query("INSERT INTO posts (username, content, timestamp, retweet) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, timestamp, data.retweet], function (error, results) {
-            if (error == null) {
-
+            let timestamp = new Date().toISOString();
+            try {
+                let new_post = await client.query("INSERT INTO posts (username, content, timestamp, retweet) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, timestamp, data.retweet]);
+                new_post = new_post.rows[0];
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(200);
-
-                response.write(JSON.stringify(results.rows[0]));
-
+                response.write(JSON.stringify(new_post));
                 response.end();
-
-            } else {
-                response.writeHead(204);
-
+            } catch (error) {
+                console.log("THERE WAS AN ERROR: ", error);
+                response.writeHead(401);
                 response.end();
             }
-        });
-    });
+        }
+    );
 };
 
 
