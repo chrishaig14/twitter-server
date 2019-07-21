@@ -370,18 +370,24 @@ const put_userpic = (request, response) => {
 
 app.put("/users/me/img", put_userpic);
 
-const get_search = (request, response) => {
+const get_search = async (request, response) => {
     let url_parsed = url.parse(request.url);
     let qstring = queryString.parse(url_parsed.search);
 
-    client.query("SELECT username FROM users WHERE username LIKE $1;", ["%" + qstring.term + "%"], (error, result) => {
-        if (error === null) {
-            select_callback(JSON.stringify(result.rows), response);
-        } else {
-            response.writeHead(204);
-            response.end();
-        }
-    });
+    try {
+        let results = await client.query("SELECT username FROM users WHERE username LIKE $1;", ["%" + qstring.term + "%"]);
+        results = results.rows;
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(200);
+        response.write(JSON.stringify(results));
+        response.end();
+    } catch (error) {
+        console.log("THERE WAS AN ERROR: ", error);
+        response.writeHead(401);
+        response.end();
+    }
 };
 
 app.get("/search", get_search);
