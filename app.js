@@ -308,23 +308,22 @@ function new_comment(request, response) {
 
 app.post("/posts/{}/comments", new_comment);
 
-const get_comments = (request, response) => {
+const get_comments = async (request, response) => {
     let post_id = request.url.split("/")[2];
-    client.query("SELECT * FROM comments WHERE post = $1;", [post_id], function (error, results) {
-        if (error == null) {
-            response.setHeader("Content-Type", "application/json");
-            response.setHeader("Access-Control-Allow-Origin", "*");
-            response.setHeader("Access-Control-Expose-Headers", "Authorization");
-            response.writeHead(200);
-            response.write(JSON.stringify(results.rows));
-
-            response.end();
-        } else {
-            response.writeHead(204);
-
-            response.end();
-        }
-    });
+    try {
+        let comments = await client.query("SELECT * FROM comments WHERE post = $1;", [post_id]);
+        comments = comments.rows;
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Expose-Headers", "Authorization");
+        response.writeHead(200);
+        response.write(JSON.stringify(comments));
+        response.end();
+    } catch (error) {
+        console.log("THERE WAS AN ERROR: ", error);
+        response.writeHead(401);
+        response.end();
+    }
 };
 
 app.get("/posts/{}/comments", get_comments);
