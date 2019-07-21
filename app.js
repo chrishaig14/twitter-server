@@ -177,8 +177,21 @@ const get_feed = async (request, response) => {
         users_posts = users_posts.rows;
         my_posts = my_posts.rows;
         shares = shares.rows;
-        response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
         let posts = users_posts.concat(my_posts);
+
+        for (let [index, post] of posts.entries()) {
+            post.shares = await client.query("SELECT username FROM shares WHERE post_id = $1;", [post.id]);
+            post.shares = post.shares.rows;
+            for (let [index, user] of post.shares.entries()) {
+                user = user.username;
+                post.shares[index] = user;
+            }
+            posts[index] = post;
+            console.log("POST SHARES: ", post.shares);
+        }
+        console.log("POSTS: ", posts);
+        response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
+
         response.write(JSON.stringify({posts: posts, shares: shares}));
         response.end();
     } catch (error) {
