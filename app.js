@@ -112,7 +112,32 @@ function login_handler(request, response, data) {
 }
 
 const login = (request, response) => {
-    get_request_body(request, response, login_handler);
+    let body = [];
+    request.on("data", chunk => {
+        body.push(chunk);
+    });
+    request.on("end", async () => {
+        body = Buffer.concat(body).toString();
+        let data = JSON.parse(body);
+        try {
+            let results = await client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password]);
+            if (results.rows.length === 1) {
+                response.setHeader("Content-Type", "application/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Expose-Headers", "Authorization");
+                response.setHeader("Authorization", data.username);
+                response.writeHead(204);
+                response.end();
+            } else {
+                response.writeHead(401, {"Access-Control-Allow-Origin": "*"});
+                response.end();
+            }
+        } catch (error) {
+            console.log("THERE WAS AN ERROR: ", error);
+            response.writeHead(403);
+            response.end();
+        }
+    });
 };
 
 app.post("/login", login);
