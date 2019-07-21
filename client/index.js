@@ -180,7 +180,7 @@ function make_post(post_data) {
     });
     post.getElementsByClassName("post-content")[0].innerHTML = post_data.content;
     let post_timestamp = post_clone.children[0].getElementsByClassName("post-timestamp")[0];
-    var options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
+    var options = {weekday: "long", year: "numeric", month: "long", day: "numeric"};
     let date_string = new Date(post_data.timestamp).toLocaleDateString("default", options);
     post_timestamp.innerText = (date_string);
     let comment_section = post.getElementsByClassName("comment-section")[0];
@@ -446,10 +446,10 @@ function encodeImageFileAsURL(file, callback) {
 }
 
 function str_obj(str) {
-    str = str.split('; ');
+    str = str.split("; ");
     var result = {};
     for (var i = 0; i < str.length; i++) {
-        var cur = str[i].split('=');
+        var cur = str[i].split("=");
         result[cur[0]] = cur[1];
     }
     return result;

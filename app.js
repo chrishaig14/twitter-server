@@ -138,27 +138,29 @@ app.get("/styles.css", get_styles_css);
 
 app.get("/index.js", get_index_js);
 
-const get_feed = (request, response) => {
+const get_feed = async (request, response) => {
 
     let username = request.headers["authorization"];
-    client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results, fields) {
-        if (error === null) {
-
-            client.query("SELECT * FROM posts WHERE username = $1;", [username], function (error, results2, fields) {
-                response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
-                let posts = results2.rows.concat(results.rows);
-                client.query("SELECT * FROM shares WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username], function (error, results3, fields) {
-                        response.write(JSON.stringify({posts: posts, shares: results3.rows}));
-                        response.end();
-                    }
-                );
-            });
-        } else {
-            response.writeHead(204, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
-            response.end();
-        }
-    });
-};
+    // All followed users posts
+    try {
+        let users_posts = await client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username]);
+        let my_posts = await client.query("SELECT * FROM posts WHERE username = $1;", [username]);
+        let shares = await client.query("SELECT * FROM shares WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username]);
+        console.log("USER POSTS:", users_posts.rows);
+        console.log("MY POSTS:", my_posts.rows);
+        console.log("SHARES:", shares.rows);
+        users_posts = users_posts.rows;
+        my_posts = my_posts.rows;
+        shares = shares.rows;
+        response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
+        let posts = users_posts.concat(my_posts);
+        response.write(JSON.stringify({posts: posts, shares: shares}));
+        response.end();
+    } catch (error) {
+        console.log("THERE WAS AN ERROR!: ", error);
+        response.writeHead(401);
+        response.end();
+    }
 
 app.get("/feed", get_feed);
 
