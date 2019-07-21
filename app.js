@@ -161,6 +161,7 @@ const get_feed = async (request, response) => {
         response.writeHead(401);
         response.end();
     }
+};
 
 app.get("/feed", get_feed);
 
@@ -282,27 +283,26 @@ function new_comment(request, response) {
     request.on("data", chunk => {
         body.push(chunk);
     });
-    request.on("end", () => {
+    request.on("end", async () => {
         body = Buffer.concat(body).toString();
 
         let data = JSON.parse(body);
 
         let post_id = request.url.split("/")[2];
-        client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, data.parent, post_id], function (error, results) {
-            if (error == null) {
-                response.setHeader("Content-Type", "application/json");
-                response.setHeader("Access-Control-Allow-Origin", "*");
-                response.setHeader("Access-Control-Expose-Headers", "Authorization");
-                response.writeHead(200);
-                response.write(JSON.stringify(results.rows[0]));
-
-                response.end();
-            } else {
-                response.writeHead(401);
-
-                response.end();
-            }
-        });
+        try {
+            let new_comment = await client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, data.parent, post_id]);
+            new_comment = new_comment.rows[0];
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(200);
+            response.write(JSON.stringify(new_comment));
+            response.end();
+        } catch (error) {
+            console.log("THERE WAS AN ERROR: ", error);
+            response.writeHead(401);
+            response.end();
+        }
     });
 }
 
