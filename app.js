@@ -61,46 +61,6 @@ const get_users = (request, response) => {
 
 app.get("/users", get_users);
 
-function get_request_body(request, response, on_end) {
-    let body = [];
-    request.on("data", chunk => {
-        body.push(chunk);
-    });
-    request.on("end", () => {
-        body = Buffer.concat(body).toString();
-        try {
-            let request_body = JSON.parse(body);
-            on_end(request, response, request_body);
-        } catch (e) {
-            response.writeHead(400, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
-            response.end();
-        }
-    });
-}
-
-function login_handler(request, response, data) {
-    client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password], function (error, results) {
-        if (error === null) {
-            if (results.rows.length === 1) {
-                response.setHeader("Content-Type", "application/json");
-                response.setHeader("Access-Control-Allow-Origin", "*");
-                response.setHeader("Access-Control-Expose-Headers", "Authorization");
-                response.setHeader("Authorization", data.username);
-                response.writeHead(204);
-                response.end();
-            } else {
-                response.writeHead(401, {"Access-Control-Allow-Origin": "*"});
-                response.write("NOTOK NOTOK NOTOK NOTOK NOTOK");
-                response.end();
-            }
-        } else {
-            response.writeHead(202);
-            response.write("DATABASE ERROR:", error);
-            response.end();
-        }
-    });
-}
-
 const login = (request, response) => {
     let body = [];
     request.on("data", chunk => {
