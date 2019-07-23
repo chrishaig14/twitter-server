@@ -61,16 +61,6 @@ const get_users = (request, response) => {
 
 app.get("/users", get_users);
 
-const get_index = (request, response) => {
-    fs.readFile("client/index.html", function (err, data) {
-        response.writeHead(200, {"Content-Type": "text/html"});
-        response.write(data);
-        response.end();
-    });
-};
-
-app.get("/", get_index);
-
 function get_request_body(request, response, on_end) {
     let body = [];
     request.on("data", chunk => {
@@ -141,27 +131,6 @@ const login = (request, response) => {
 };
 
 app.post("/login", login);
-
-
-const get_styles_css = (request, response) => {
-    fs.readFile("client/styles.css", function (err, data) {
-        response.writeHead(200, {"Content-Type": "text/css"});
-        response.write(data);
-        response.end();
-    });
-};
-
-const get_index_js = (request, response) => {
-    fs.readFile("client/index.js", function (err, data) {
-        response.writeHead(200, {"Content-Type": "application/javascript"});
-        response.write(data);
-        response.end();
-    });
-};
-
-app.get("/styles.css", get_styles_css);
-
-app.get("/index.js", get_index_js);
 
 const get_feed = async (request, response) => {
 
