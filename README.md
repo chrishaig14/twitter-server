@@ -1,1 +1,1 @@
-New version, using jQuery: https://github.com/chrishaig14/twitter-clone-jquery
+Repo for the front end: [twitter-app](https://github.com/chrishaig14/twitter-app)
