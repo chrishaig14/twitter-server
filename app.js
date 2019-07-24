@@ -2,6 +2,12 @@ let http = require("http");
 let fs = require("fs");
 const {Client} = require("pg");
 var url = require("url");
+var cors = require("cors");
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 8888;
+app.use(cors());
+
 const queryString = require("query-string");
 
 const DB_URL = process.env.DATABASE_URL;
@@ -22,7 +28,6 @@ client.connect().then(() => client.query("SELECT table_name FROM information_sch
 
 console.log("Connecting database at:", DATABASE_URL);
 
-var port = process.env.PORT || 8888;
 
 function select_callback(result, response) {
     response.setHeader("Content-Type", "application/json");
@@ -33,25 +38,25 @@ function select_callback(result, response) {
     response.end();
 }
 
-
-let app = {
-    "requests": [],
-    "add_request": function (url, method, handler) {
-        this.requests.push({"url": url, "method": method, "handler": handler});
-    },
-    "get": function (url, handler) {
-        this.add_request(url, "GET", handler);
-    },
-    "post": function (url, handler) {
-        this.add_request(url, "POST", handler);
-    },
-    "put": function (url, handler) {
-        this.add_request(url, "PUT", handler);
-    },
-    "delete": function (url, handler) {
-        this.add_request(url, "DELETE", handler);
-    }
-};
+//
+// let app = {
+//     "requests": [],
+//     "add_request": function (url, method, handler) {
+//         this.requests.push({"url": url, "method": method, "handler": handler});
+//     },
+//     "get": function (url, handler) {
+//         this.add_request(url, "GET", handler);
+//     },
+//     "post": function (url, handler) {
+//         this.add_request(url, "POST", handler);
+//     },
+//     "put": function (url, handler) {
+//         this.add_request(url, "PUT", handler);
+//     },
+//     "delete": function (url, handler) {
+//         this.add_request(url, "DELETE", handler);
+//     }
+// };
 
 const get_users = (request, response) => {
     response.writeHead("200");
@@ -269,7 +274,7 @@ function new_comment(request, response) {
 
         let data = JSON.parse(body);
 
-        let post_id = request.url.split("/")[2];
+        let post_id = request.params.postId;
         try {
             let new_comment = await client.query("INSERT INTO comments (username, content, parent, post) VALUES ($1, $2, $3, $4) RETURNING *", [username, data.content, data.parent, post_id]);
             new_comment = new_comment.rows[0];
@@ -287,10 +292,10 @@ function new_comment(request, response) {
     });
 }
 
-app.post("/posts/{}/comments", new_comment);
+app.post("/posts/:postId/comments", new_comment);
 
 const get_comments = async (request, response) => {
-    let post_id = request.url.split("/")[2];
+    let post_id = request.params.postId;
     try {
         let comments = await client.query("SELECT * FROM comments WHERE post = $1;", [post_id]);
         comments = comments.rows;
@@ -307,11 +312,11 @@ const get_comments = async (request, response) => {
     }
 };
 
-app.get("/posts/{}/comments", get_comments);
+app.get("/posts/:postId/comments", get_comments);
 
 
 const get_post = (request, response) => {
-    let post_id = request.url.split("/")[2];
+    let post_id = request.params.postId;
     client.query("SELECT * FROM posts WHERE id = $1;", [post_id], (error, result) => {
         if (error === null) {
             select_callback(JSON.stringify(result.rows[0]), response);
@@ -322,7 +327,7 @@ const get_post = (request, response) => {
     });
 };
 
-app.get("/posts/{}", get_post);
+app.get("/posts/:postId", get_post);
 
 const put_userpic = (request, response) => {
     let token = request.headers["authorization"];
@@ -373,24 +378,24 @@ const get_search = async (request, response) => {
 
 app.get("/search", get_search);
 
-app.default = function (request, response) {
-
-    if (request.method === "OPTIONS") {
-        response.setHeader("Access-Control-Allow-Methods", "DELETE, PUT");
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        response.writeHead(204);
-        response.end();
-
-        return;
-    }
-    response.writeHead(404);
-    response.end();
-};
+// app.default = function (request, response) {
+//
+//     if (request.method === "OPTIONS") {
+//         response.setHeader("Access-Control-Allow-Methods", "DELETE, PUT");
+//         response.setHeader("Access-Control-Allow-Origin", "*");
+//         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//         response.writeHead(204);
+//         response.end();
+//
+//         return;
+//     }
+//     response.writeHead(404);
+//     response.end();
+// };
 
 const get_user_image = async (request, response) => {
 
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
 
     try {
         let img = await client.query("SELECT img FROM imgs WHERE username = $1;", [user_id]);
@@ -408,29 +413,9 @@ const get_user_image = async (request, response) => {
     }
 };
 
-app.get("/users/{}/img", get_user_image);
-
-function match_url(pattern, url) {
-    let s_pat = pattern.split("/");
-    let s_url = url.split("/");
-    let q_string = s_url[s_url.length - 1];
-    q_string = q_string.split("?");
-    s_url[s_url.length - 1] = q_string[0];
-    if (s_pat.length !== s_url.length) {
-        return false;
-    }
-    for (let i = 0; i < s_pat.length; i++) {
-        if (s_pat[i] === s_url[i] || s_pat[i] === "{}") {
-            continue;
-        } else {
-            return false;
-        }
-    }
-    return true;
-}
-
+app.get("/users/:username/img", get_user_image);
 const get_user_info = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
@@ -455,10 +440,13 @@ const get_user_info = (request, response) => {
 
 };
 
-app.get("/users/{}", get_user_info);
+app.get("/users/:username", get_user_info);
 
 const get_user_posts = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
+    if (user_id === "me") {
+        user_id = request.headers["authorization"];
+    }
     client.query("SELECT * FROM posts WHERE username = $1;", [user_id], (error, result) => {
         response.setHeader("Content-Type", "application/json");
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -469,14 +457,14 @@ const get_user_posts = (request, response) => {
     });
 };
 
-app.get("/users/{}/posts", get_user_posts);
+app.get("/users/:username/posts", get_user_posts);
 
 const get_followee = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
-    let followee_id = request.url.split("/")[4];
+    let followee_id = request.params.follow;
     client.query("SELECT * FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
         if (result.rows.length === 0) {
             response.setHeader("Content-Type", "application/json");
@@ -494,10 +482,10 @@ const get_followee = (request, response) => {
     });
 };
 
-app.get("/users/{}/followees/{}", get_followee);
+app.get("/users/:username/followees/:follow", get_followee);
 
 const get_followees = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
@@ -511,35 +499,14 @@ const get_followees = (request, response) => {
     });
 };
 
-app.get("/users/{}/followees", get_followees);
-
-let make = function (str, pattern) {
-    let str_split = str.split("/");
-    let pat_split = pattern.split("/");
-    if (str_split.length !== pat_split.length) {
-        return false;
-    }
-    let obj = {};
-    for (let i = 0; i < pat_split.length; i++) {
-        let pat = pat_split[i];
-        let st = str_split[i];
-        if (pat[0] === ":") {
-            obj[pat.slice(1)] = st;
-        } else {
-            if (pat !== st) {
-                return false;
-            }
-        }
-    }
-    return obj;
-};
+app.get("/users/:username/followees", get_followees);
 
 const delete_followee = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
-    let followee_id = request.url.split("/")[4];
+    let followee_id = request.params.follow;
     client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
 
         response.setHeader("Content-Type", "application/json");
@@ -551,14 +518,14 @@ const delete_followee = (request, response) => {
     });
 };
 
-app.delete("/users/{}/followees/{}", delete_followee);
+app.delete("/users/:username/followees/:follow", delete_followee);
 
 const put_followee = (request, response) => {
-    let user_id = request.url.split("/")[2];
+    let user_id = request.params.username;
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
-    let followee_id = request.url.split("/")[4];
+    let followee_id = request.params.follow;
     client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
         client.query("INSERT INTO followers (follower,followee) VALUES ($1,$2);", [user_id, followee_id], (error, result) => {
             response.setHeader("Content-Type", "application/json");
@@ -572,21 +539,6 @@ const put_followee = (request, response) => {
 
 };
 
-app.put("/users/{}/followees/{}", put_followee);
+app.put("/users/:username/followees/:follow", put_followee);
 
-http.createServer(function (request, response) {
-    let handled = false;
-    for (let req of app.requests) {
-        // if (match_url(req.url, request.url))
-        if (match_url(req.url, request.url) && request.method === req.method) {
-            req.handler(request, response);
-            handled = true;
-            break;
-        }
-    }
-    if (!handled) {
-        console.log("ERROR: no match for: ", request.url);
-
-        app.default(request, response);
-    }
-}).listen(port);
+app.listen(port);
