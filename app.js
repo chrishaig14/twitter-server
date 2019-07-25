@@ -38,26 +38,6 @@ function select_callback(result, response) {
     response.end();
 }
 
-//
-// let app = {
-//     "requests": [],
-//     "add_request": function (url, method, handler) {
-//         this.requests.push({"url": url, "method": method, "handler": handler});
-//     },
-//     "get": function (url, handler) {
-//         this.add_request(url, "GET", handler);
-//     },
-//     "post": function (url, handler) {
-//         this.add_request(url, "POST", handler);
-//     },
-//     "put": function (url, handler) {
-//         this.add_request(url, "PUT", handler);
-//     },
-//     "delete": function (url, handler) {
-//         this.add_request(url, "DELETE", handler);
-//     }
-// };
-
 const get_users = (request, response) => {
     response.writeHead("200");
     response.write("USERS OK");
@@ -262,9 +242,7 @@ const new_post = (request, response) => {
 app.post("/posts", new_post);
 
 function new_comment(request, response) {
-    let token = request.headers["authorization"];
-    let username = token;
-
+    let username = request.headers["authorization"];
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -339,7 +317,6 @@ const put_userpic = (request, response) => {
     });
     request.on("end", () => {
         body = Buffer.concat(body).toString();
-        // let data = JSON.parse(body);
         img = body;
 
         client.query("UPDATE imgs SET img = $2 WHERE username = $1;", [username, img], function (error, results) {
@@ -377,21 +354,6 @@ const get_search = async (request, response) => {
 };
 
 app.get("/search", get_search);
-
-// app.default = function (request, response) {
-//
-//     if (request.method === "OPTIONS") {
-//         response.setHeader("Access-Control-Allow-Methods", "DELETE, PUT");
-//         response.setHeader("Access-Control-Allow-Origin", "*");
-//         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//         response.writeHead(204);
-//         response.end();
-//
-//         return;
-//     }
-//     response.writeHead(404);
-//     response.end();
-// };
 
 const get_user_image = async (request, response) => {
 
