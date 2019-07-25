@@ -404,19 +404,49 @@ const get_user_info = (request, response) => {
 
 app.get("/users/:username", get_user_info);
 
-const get_user_posts = (request, response) => {
-    let user_id = request.params.username;
-    if (user_id === "me") {
-        user_id = request.headers["authorization"];
-    }
-    client.query("SELECT * FROM posts WHERE username = $1;", [user_id], (error, result) => {
-        response.setHeader("Content-Type", "application/json");
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Expose-Headers", "Authorization");
-        response.writeHead(200);
-        response.write(JSON.stringify(result.rows));
+const get_user_posts = async (request, response) => {
+
+    let username = request.params.username;
+    // All followed users posts
+    try {
+        let posts = await client.query("SELECT * FROM posts WHERE username = $1;", [username]);
+        // let shares = await client.query("SELECT * FROM shares WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username]);
+        // console.log("USER POSTS:", users_posts.rows);
+        // console.log("MY POSTS:", my_posts.rows);
+        // console.log("SHARES:", shares.rows);
+        console.log("POSTS:", posts.rows);
+        posts = posts.rows;
+        // shares = shares.rows;
+        for (let [index, post] of posts.entries()) {
+            post.shares = await client.query("SELECT username FROM shares WHERE post_id = $1;", [post.id]);
+            post.shares = post.shares.rows;
+            for (let [index, user] of post.shares.entries()) {
+                user = user.username;
+                post.shares[index] = user;
+            }
+            posts[index] = post;
+            console.log("POST SHARES: ", post.shares);
+        }
+        for (let [index, post] of posts.entries()) {
+            post.retweet = await client.query("SELECT * FROM posts WHERE id = $1;", [post.retweet]);
+            if (post.retweet.rows.length === 0) {
+                post.retweet = null;
+            } else {
+                post.retweet = post.retweet.rows[0];
+            }
+            posts[index] = post;
+        }
+
+        console.log("POSTS: ", posts);
+        response.writeHead(200, {"Access-Control-Allow-Origin": "*", "Content-Type": "application/json"});
+
+        response.write(JSON.stringify({posts: posts}));
         response.end();
-    });
+    } catch (error) {
+        console.log("THERE WAS AN ERROR!: ", error);
+        response.writeHead(401);
+        response.end();
+    }
 };
 
 app.get("/users/:username/posts", get_user_posts);
