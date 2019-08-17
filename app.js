@@ -15,7 +15,7 @@ let DATABASE_URL;
 if (DB_URL) {
     DATABASE_URL = {connectionString: DB_URL};
 } else {
-    DATABASE_URL = {host: "localhost", user: "twitterdb", password: "twitterdb", database: "twitterdb"};
+    DATABASE_URL = {host: "localhost", user: "christian", password: "1234", database: "christiandb"};
 }
 
 
@@ -82,9 +82,10 @@ const get_feed = async (request, response) => {
     let username = request.headers["authorization"];
     // All followed users posts
     try {
-        let users_posts = await client.query("SELECT * FROM posts WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username]);
+        let users_posts = await client.query("SELECT * FROM posts WHERE username IN (SELECT follows FROM followers WHERE username = $1);", [username]);
+        // if (users_posts.rows.length === 0) throw "no posts for user";
         let my_posts = await client.query("SELECT * FROM posts WHERE username = $1;", [username]);
-        let shares = await client.query("SELECT * FROM shares WHERE username IN (SELECT followee FROM followers WHERE follower = $1);", [username]);
+        let shares = await client.query("SELECT * FROM shares WHERE username IN (SELECT follows FROM followers WHERE username = $1);", [username]);
         console.log("USER POSTS:", users_posts.rows);
         console.log("MY POSTS:", my_posts.rows);
         console.log("SHARES:", shares.rows);
@@ -94,7 +95,7 @@ const get_feed = async (request, response) => {
         let posts = users_posts.concat(my_posts);
 
         for (let [index, post] of posts.entries()) {
-            post.shares = await client.query("SELECT username FROM shares WHERE post_id = $1;", [post.id]);
+            post.shares = await client.query("SELECT username FROM shares WHERE post = $1;", [post.id]);
             post.shares = post.shares.rows;
             for (let [index, user] of post.shares.entries()) {
                 user = user.username;
@@ -140,7 +141,7 @@ const new_user = (request, response) => {
         client.query("INSERT INTO users VALUES($1, $2) RETURNING *", [data.username, data.password]).then((result) => {
 
 
-            client.query("INSERT INTO imgs VALUES($1, $2)", [data.username, ""]).then((result) => {
+            client.query("INSERT INTO images VALUES($1, $2)", [data.username, ""]).then((result) => {
 
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
@@ -175,7 +176,7 @@ const share_post = (request, response) => {
         let data = JSON.parse(body);
 
         let timestamp = new Date().toISOString();
-        client.query("INSERT INTO shares (username, post_id, timestamp) VALUES ($1, $2, $3) RETURNING *", [username, data.post_id, timestamp], function (error, results) {
+        client.query("INSERT INTO shares (username, post, timestamp) VALUES ($1, $2, $3) RETURNING *", [username, data.post_id, timestamp], function (error, results) {
             if (error == null) {
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
@@ -198,8 +199,8 @@ const share_post = (request, response) => {
 app.post("/shares", share_post);
 
 
-const new_post = (request, response) => {
-
+const new_post = async (request, response) => {
+    console.log("REQUEST headers: ", request.headers);
     let body = [];
     request.on("data", chunk => {
         body.push(chunk);
@@ -211,6 +212,9 @@ const new_post = (request, response) => {
             body = Buffer.concat(body).toString();
 
             let data = JSON.parse(body);
+
+        console.log("RECEIVE REQUEST: new post ", data);
+        console.log("USER: ", username);
 
             let timestamp = new Date().toISOString();
             try {
@@ -319,7 +323,7 @@ const put_userpic = (request, response) => {
         body = Buffer.concat(body).toString();
         img = body;
 
-        client.query("UPDATE imgs SET img = $2 WHERE username = $1;", [username, img], function (error, results) {
+        client.query("UPDATE images SET img = $2 WHERE username = $1;", [username, img], function (error, results) {
 
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
@@ -360,7 +364,7 @@ const get_user_image = async (request, response) => {
     let user_id = request.params.username;
 
     try {
-        let img = await client.query("SELECT img FROM imgs WHERE username = $1;", [user_id]);
+        let img = await client.query("SELECT img FROM images WHERE username = $1;", [user_id]);
         img = img.rows[0];
         response.setHeader("Content-Type", "application/json");
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -382,7 +386,7 @@ const get_user_info = (request, response) => {
         user_id = request.headers["authorization"];
     }
 
-    client.query("SELECT img FROM imgs WHERE username = $1", [user_id], function (error, result) {
+    client.query("SELECT img FROM images WHERE username = $1", [user_id], function (error, result) {
             if (error === null) {
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
@@ -418,7 +422,7 @@ const get_user_posts = async (request, response) => {
         posts = posts.rows;
         // shares = shares.rows;
         for (let [index, post] of posts.entries()) {
-            post.shares = await client.query("SELECT username FROM shares WHERE post_id = $1;", [post.id]);
+            post.shares = await client.query("SELECT username FROM shares WHERE post = $1;", [post.id]);
             post.shares = post.shares.rows;
             for (let [index, user] of post.shares.entries()) {
                 user = user.username;
@@ -457,7 +461,7 @@ const get_followee = (request, response) => {
         user_id = request.headers["authorization"];
     }
     let followee_id = request.params.follow;
-    client.query("SELECT * FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
+    client.query("SELECT * FROM followers WHERE username = $1 AND follows = $2;", [user_id, followee_id], (error, result) => {
         if (result.rows.length === 0) {
             response.setHeader("Content-Type", "application/json");
             response.setHeader("Access-Control-Allow-Origin", "*");
@@ -481,9 +485,16 @@ const get_followees = (request, response) => {
     if (user_id === "me") {
         user_id = request.headers["authorization"];
     }
-    client.query("SELECT followee FROM followers WHERE follower = $1", [user_id], (error, result) => {
+    client.query("SELECT follows FROM followers WHERE username = $1", [user_id], (error, result) => {
         if (error === null) {
-            select_callback(JSON.stringify(result.rows), response);
+            response.setHeader("Content-Type", "application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Expose-Headers", "Authorization");
+            response.writeHead(200);
+            console.log("SENDING: ", result.rows);
+            response.write(JSON.stringify(result.rows.map(x => x.follows)));
+
+            response.end();
         } else {
             response.writeHead(401);
             response.end();
@@ -499,7 +510,7 @@ const delete_followee = (request, response) => {
         user_id = request.headers["authorization"];
     }
     let followee_id = request.params.follow;
-    client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
+    client.query("DELETE FROM followers WHERE username = $1 AND follows = $2;", [user_id, followee_id], (error, result) => {
 
         response.setHeader("Content-Type", "application/json");
         response.setHeader("Access-Control-Allow-Methods", "DELETE");
@@ -518,8 +529,8 @@ const put_followee = (request, response) => {
         user_id = request.headers["authorization"];
     }
     let followee_id = request.params.follow;
-    client.query("DELETE FROM followers WHERE follower = $1 AND followee = $2;", [user_id, followee_id], (error, result) => {
-        client.query("INSERT INTO followers (follower,followee) VALUES ($1,$2);", [user_id, followee_id], (error, result) => {
+    client.query("DELETE FROM followers WHERE username = $1 AND follows = $2;", [user_id, followee_id], (error, result) => {
+        client.query("INSERT INTO followers (username,follows) VALUES ($1,$2);", [user_id, followee_id], (error, result) => {
             response.setHeader("Content-Type", "application/json");
             response.setHeader("Access-Control-Allow-Methods", "DELETE");
             response.setHeader("Access-Control-Allow-Origin", "*");
