@@ -182,7 +182,7 @@ const share_post = (request, response) => {
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(200);
-                response.write(JSON.stringify(results.rows[0]));
+                // response.write(JSON.stringify(results.rows[0]));
 
                 response.end();
 
