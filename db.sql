@@ -29,8 +29,6 @@ create table images (
     img text
 );
 
-
-
 create table shares (
     username varchar(255) not null references users(username),
     post integer not null references posts(id),

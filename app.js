@@ -57,7 +57,6 @@ const login = (request, response) => {
         try {
             let results = await client.query("SELECT * from users WHERE username = $1 AND password = $2;", [data.username, data.password]);
             if (results.rows.length === 1) {
-                response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.setHeader("Authorization", data.username);
@@ -69,7 +68,7 @@ const login = (request, response) => {
             }
         } catch (error) {
             console.log("THERE WAS AN ERROR: ", error);
-            response.writeHead(403);
+            response.writeHead(500);
             response.end();
         }
     });
@@ -143,16 +142,17 @@ const new_user = (request, response) => {
 
             client.query("INSERT INTO images VALUES($1, $2)", [data.username, ""]).then((result) => {
 
-                response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
                 response.writeHead(204);
                 response.end();
             }).catch((e) => {
-
+                response.writeHead(500);
+                response.end();
             });
         }).catch((e) => {
-
+            response.writeHead(500);
+            response.end();
         });
 
     });
@@ -181,13 +181,13 @@ const share_post = (request, response) => {
                 response.setHeader("Content-Type", "application/json");
                 response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setHeader("Access-Control-Expose-Headers", "Authorization");
-                response.writeHead(200);
+                response.writeHead(204);
                 // response.write(JSON.stringify(results.rows[0]));
 
                 response.end();
 
             } else {
-                response.writeHead(204);
+                response.writeHead(500);
 
                 response.end();
             }
